@@ -1,0 +1,33 @@
+server:
+  port: 8082
+  servlet:
+    context-path: /exam
+  error:
+    include-message: always
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${RDS_USERNAME:root}
+    password: ${RDS_PASSWORD:root}
+    url: jdbc:mysql://${RDS_HOST_NAME:localhost}:${RDS_PORT:3306}/${RDS_DB_NAME:examination-platform}?useUnicode=yes&characterEncoding=UTF-8&createDatabaseIfNotExist=true&useSSL=true
+  #    username: ${RDS_USERNAME:adminusername}
+  #    password: ${RDS_PASSWORD:adminpassword}
+  #    url: jdbc:mysql://${RDS_HOST_NAME:examination-platform.cmyab7tnjyi1.ap-southeast-1.rds.amazonaws.com}:${RDS_PORT:3306}/${RDS_DB_NAME:examination-platform}?useUnicode=yes&characterEncoding=UTF-8&createDatabaseIfNotExist=true&useSSL=true
+  jackson:
+    serialization:
+      FAIL_ON_EMPTY_BEANS: false
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL5InnoDBDialect
+        globally_quoted_identifiers: true
+        enable_lazy_load_no_trans: true
+    show-sql: true
+  mvc:
+    pathmatch:
+      matching-strategy: ANT_PATH_MATCHER
+app:
+  services:
+    identity: http://localhost:8080/identity

@@ -43,8 +43,8 @@ public class Score extends AbstractAuditingEntity {
     @JoinColumn(name = MULTIPLE_CHOICE_TEST_ID, referencedColumnName = "id")
     private MultipleChoiceTest multipleChoiceTest;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private UserProfile userProfile;
+
+    private String userId;
 
     @OneToMany(
             mappedBy = "score",

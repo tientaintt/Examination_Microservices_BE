@@ -46,7 +46,10 @@ public class ApplicationInitConfig {
                         .name(PredefinedRole.ROLE_STUDENT)
                         .description("Student role")
                         .build());
-
+                roleRepository.save(Role.builder()
+                        .name(PredefinedRole.ROLE_TEACHER)
+                        .description("Teacher role")
+                        .build());
                 Role adminRole = roleRepository.save(Role.builder()
                         .name(PredefinedRole.ROLE_ADMIN)
                         .description("Admin role")
@@ -58,7 +61,7 @@ public class ApplicationInitConfig {
                 User user = User.builder()
                         .username(ADMIN_USER_NAME)
                         .password(passwordEncoder.encode(ADMIN_PASSWORD))
-
+                        .roles(roles)
                         .build();
 
                 userRepository.save(user);

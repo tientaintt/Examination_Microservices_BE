@@ -5,7 +5,5 @@ public class PredefinedRole {
     public static final String ROLE_ADMIN = "ADMIN";
     public static final String ROLE_TEACHER = "TEACHER";
 
-
-
     private PredefinedRole() {}
 }

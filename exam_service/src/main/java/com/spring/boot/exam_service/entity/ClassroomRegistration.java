@@ -20,8 +20,8 @@ public class ClassroomRegistration extends AbstractAuditingEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     private Classroom classRoom;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private UserProfile userProfile;
+
+    private String userID;
 
 
 }

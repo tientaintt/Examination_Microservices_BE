@@ -14,6 +14,9 @@ public enum ErrorMessage {
     SIGNUP_LOGIN_NAME_INVALID_CHARACTER(Constants.INVALID_PARAMETER, "There are validation errors of loginName - Must be made of letter, number, '-', '_', and/or '.' . Length must be between 6 and 16 chars."),
     SIGNUP_LOGIN_NAME_DUPLICATE(Constants.USER_ALREADY_EXISTS, "User with loginName %s already exists."),
 
+    UPDATE_EMAIL_ADDRESS_DUPLICATE(Constants.USER_ALREADY_EXISTS, "New email address already exists."),
+
+    CHANGE_PASSWORD_WRONG_OLD_PASSWORD(Constants.BAD_REQUEST, "Old password is incorrect."),
     ;
     private String errorCode;
     private String message;

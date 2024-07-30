@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     ResponseEntity<APIResponse> runtimeExceptionHandler(RuntimeException e) {
+        log.info("RuntimeException");
         APIResponse response=new APIResponse();
         response.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage() +e.getMessage());
         response.setCode(ErrorCode.UNAUTHENTICATED.getCode());

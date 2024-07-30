@@ -1,5 +1,6 @@
 package com.spring.boot.identity_service.dto.request;
 
+import com.spring.boot.identity_service.validate.ValidateAuthentication;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -7,6 +8,7 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ValidateAuthentication
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AuthenticationRequest {
     String username;

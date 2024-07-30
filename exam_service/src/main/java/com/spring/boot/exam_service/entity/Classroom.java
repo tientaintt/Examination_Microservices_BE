@@ -41,9 +41,9 @@ public class Classroom extends AbstractAuditingEntity {
     private Boolean isPrivate;
 
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="managerId")
-    private UserProfile userProfile;
+
+    @Column(name="managerId")
+    private String userID;
 
     @OneToMany(
             mappedBy = "classRoom",

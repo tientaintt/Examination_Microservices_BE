@@ -15,12 +15,11 @@ import java.text.ParseException;
 
 @Component
 public class CustomJwtDecoder implements JwtDecoder {
-    @Value("${jwt.signerKey}")
-    private String signerKey;
+
 
     private final AuthenticationService authenticationService;
 
-    private NimbusJwtDecoder nimbusJwtDecoder = null;
+
 
     public CustomJwtDecoder(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;

@@ -19,7 +19,8 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private static final String[] PUBLIC_ENDPOINTS = {
-        "/users/registration", "/auth/token", "/auth/introspect", "/auth/logout", "/auth/refresh"
+        "/users/registration", "/auth/token", "/auth/introspect", "/auth/logout", "/auth/refresh", "/signup/student"
+        ,"/users/email/check",
     };
 
     private final CustomJwtDecoder customJwtDecoder;
@@ -31,7 +32,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(request -> request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS)
+
                 .permitAll()
+                .requestMatchers(HttpMethod.GET, "/**").permitAll()
+                .requestMatchers(HttpMethod.PUT,"/users/updatepasswordverifycode").permitAll()
                 .anyRequest()
                 .authenticated());
 

@@ -1,5 +1,6 @@
 package com.spring.boot.identity_service.exception;
 
+import com.spring.boot.identity_service.constrant.Constants;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -19,9 +20,15 @@ public enum ErrorCode {
     UNAUTHENTICATED(1006,"Cannot authenticate user",HttpStatus.UNAUTHORIZED),
     TOKEN_INVALID(1007,"Token is invalid",HttpStatus.INTERNAL_SERVER_ERROR),
     PARSER_ERROR(1008,"Cannot parse json",HttpStatus.INTERNAL_SERVER_ERROR),
-
-
+    PERMISSION_DENIED(1009,"Permission denied",HttpStatus.FORBIDDEN),
+    DELETED_ADMIN(1010,"Can not delete admin account",HttpStatus.FORBIDDEN),
+    WRONG_OLD_PASSWORD(1011, "Old password is incorrect.",HttpStatus.BAD_REQUEST),
+    RESET_PASSWORD_NOT_ACCEPTABLE(1012, "Your reset password is not valid",HttpStatus.BAD_REQUEST),
+    VERIFY_EMAIL_VERIFIED_BY_ANOTHER_USER(1013,"Email address has been verified by another user.",HttpStatus.BAD_REQUEST),
+    VERIFY_NOT_ACCEPTABLE(1014,"Your verification code is not valid.",HttpStatus.NOT_ACCEPTABLE),
+    VERIFY_INVALID_STATUS(1015,"User status is not enable to verify.",HttpStatus.BAD_REQUEST),
     UNCATEGORIZED_EXCEPTION(9999,"Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR);
+
     ;
    int code;
     String message ;

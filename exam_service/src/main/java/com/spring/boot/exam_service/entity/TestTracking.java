@@ -18,8 +18,8 @@ public class TestTracking {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private UserProfile userProfile;
+
+    private String userID;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private MultipleChoiceTest multipleChoiceTest;

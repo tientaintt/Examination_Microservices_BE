@@ -1,12 +1,34 @@
 package com.spring.boot.identity_service.service;
 
-import com.spring.boot.identity_service.dto.request.AuthenticationRequest;
-import com.spring.boot.identity_service.dto.request.UserCreationRequest;
+import com.spring.boot.identity_service.dto.request.*;
 import com.spring.boot.identity_service.dto.response.APIResponse;
 import com.spring.boot.identity_service.dto.response.JwtResponse;
 import com.spring.boot.identity_service.dto.response.UserResponse;
 
+import java.util.List;
+
+
 public interface UserService {
     APIResponse<JwtResponse> createUser(UserCreationRequest userCreationRequest, Boolean isTeacher, Boolean isAdmin);
     APIResponse<JwtResponse> login(AuthenticationRequest authenticationRequest);
+    APIResponse<?> refreshToken(RefreshTokenRequest refreshTokenDTO);
+    APIResponse<?> checkEmailVerified(String email);
+    APIResponse<?> updateVerifyCode(String userId, String verifyCode);
+    APIResponse<?> updateResetPassCode(String userId, String verifyCode);
+    APIResponse<?> verifyEmail(String userID, VerificationEmailRequest verificationEmailDTO);
+
+    APIResponse<?> resetPassword(String emailAddress, ResetPasswordRequest resetPasswordDTO);
+
+    APIResponse<?> changePassword(ChangePasswordRequest changePassword);
+
+    APIResponse<?> updateUserProfile(UpdateUserRequest dto);
+
+    APIResponse<?> getAllStudentsByStatus(String search, int page, String column, int size, String sortType, boolean isActive);
+
+    APIResponse<?> getAllVerifiedStudents(String search, int page, String column, int size, String sortType);
+
+    APIResponse<?> getCurrentLoggedInUser();
+
+    APIResponse<?> deleteUser(String userID);
+    APIResponse<?> getAllUserByListId(List<String> userIds,int page,String column,int size,String sortType);
 }

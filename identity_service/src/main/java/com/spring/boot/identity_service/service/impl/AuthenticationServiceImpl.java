@@ -47,14 +47,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @NonFinal
     @Value("${jwt.signerKey}")
     protected String signerKey;
-
-    public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
+    @Override
+    public IntrospectResponse introspect(IntrospectRequest request)  {
         var token = request.getToken();
         boolean isValid = true;
 
         try {
             verifyToken(token);
-        } catch (AppException e) {
+        } catch (AppException | JOSEException | ParseException e) {
             isValid = false;
         }
 
@@ -63,6 +63,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
+
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
         var user = userRepository
                 .findByUsername(request.getUsername())
@@ -77,6 +78,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return AuthenticationResponse.builder()
                 .accessToken(token.token)
                 .expiryTime(token.expiryDate)
+                .displayName(user.getDisplayName())
+                .emailAddress(user.getEmailAddress())
+                .roles(user.getRoles().stream().map(role -> role.getName()).toList())
                 .build();
     }
 
@@ -117,8 +121,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
+
+
     private TokenInfo generateToken(User user) {
-        JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
+        JWSHeader header = new JWSHeader(JWSAlgorithm.HS256);
 
         Date issueTime = new Date();
         Date expiryTime = new Date(Instant.ofEpochMilli(issueTime.getTime())
@@ -179,5 +185,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private record TokenInfo(String token, Date expiryDate) {
+
     }
 }
