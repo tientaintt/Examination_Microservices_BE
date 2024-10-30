@@ -1,11 +1,10 @@
 package com.spring.boot.notification_service.dto.request;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+
 import lombok.Builder;
 import lombok.Data;
+
+import java.util.List;
 
 @Builder
 @Data
@@ -29,4 +28,5 @@ public class MultipleChoiceTestRequest {
 
     private Long classId;
     private String className;
+    private List<String> registerUserEmails;
 }

@@ -1,39 +1,28 @@
-package com.example.springboot.controller;
+package com.spring.boot.exam_service.controller;
 
-import com.example.springboot.constant.Constants;
-import com.example.springboot.constant.ErrorMessage;
-import com.example.springboot.dto.request.CreateClassroomDTO;
-import com.example.springboot.dto.request.CreateMultipleChoiceTestDTO;
-import com.example.springboot.dto.request.UpdateClassroomDTO;
-import com.example.springboot.dto.request.UpdateMultipleChoiceTestDTO;
-import com.example.springboot.exception.NotEnoughQuestionException;
-import com.example.springboot.exception.QuestionGroupNotFoundException;
-import com.example.springboot.exception.QuestionNotFoundException;
-import com.example.springboot.service.MultipleChoiceTestService;
-import com.example.springboot.util.CustomBuilder;
+
+import com.spring.boot.exam_service.constants.Constants;
+import com.spring.boot.exam_service.constants.ErrorMessage;
+import com.spring.boot.exam_service.dto.ApiResponse;
+import com.spring.boot.exam_service.dto.request.CreateMultipleChoiceTestDTO;
+import com.spring.boot.exam_service.dto.request.UpdateMultipleChoiceTestDTO;
+import com.spring.boot.exam_service.service.MultipleChoiceTestService;
+import com.spring.boot.exam_service.utils.CustomBuilder;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.util.LinkedHashMap;
 
 @Validated
 @RestController
-@RequestMapping("/api/v1/multiple-choice-test")
+@RequestMapping("/multiple-choice-test")
 @Slf4j
 @AllArgsConstructor
 public class MultipleChoiceTestController {
@@ -47,21 +36,21 @@ public class MultipleChoiceTestController {
 
     @GetMapping(value = "/{testId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN', 'STUDENT')")
-    public ResponseEntity<?> getMultipleChoiceTest(
+    public ApiResponse<?> getMultipleChoiceTest(
             @PathVariable(name = "testId") Long testId){
         return multipleChoiceTestService.
                 getMultipleChoiceTest(testId);
     }
     @GetMapping(value = "/my/info/{testId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<?> getInfoMyMultipleChoiceTest(
+    public ApiResponse<?> getInfoMyMultipleChoiceTest(
             @PathVariable(name = "testId") Long testId){
         return multipleChoiceTestService.
                 getInfoMultipleChoiceTest(testId);
     }
     @PreAuthorize("hasRole('STUDENT')")
     @GetMapping(value = "/me", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getMyMultipleChoiceTests(
+    public ApiResponse<?> getMyMultipleChoiceTests(
             @RequestParam(defaultValue = DEFAULT_SEARCH) String search,
             @RequestParam(defaultValue = DEFAULT_PAGE) int page,
             @RequestParam(defaultValue = DEFAULT_COLUMN) String column,
@@ -75,7 +64,7 @@ public class MultipleChoiceTestController {
 
     @PreAuthorize("hasRole('STUDENT')")
     @GetMapping(value = "/me/two-weeks-around", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getMyMultipleChoiceTestsOf2WeeksAround( @RequestParam(defaultValue = DEFAULT_SEARCH) String search,
+    public ApiResponse<?> getMyMultipleChoiceTestsOf2WeeksAround( @RequestParam(defaultValue = DEFAULT_SEARCH) String search,
                                                                      @RequestParam(defaultValue = DEFAULT_PAGE) int page,
                                                                      @RequestParam(defaultValue = DEFAULT_COLUMN) String column,
                                                                      @RequestParam(defaultValue = DEFAULT_SIZE) int size,
@@ -85,7 +74,7 @@ public class MultipleChoiceTestController {
     }
     @PreAuthorize("hasRole('STUDENT')")
     @GetMapping(value = "/me/specific-day", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getMyMultipleChoiceTestsOfASpecificDay(@RequestParam Long startOfDate,
+    public ApiResponse<?> getMyMultipleChoiceTestsOfASpecificDay(@RequestParam Long startOfDate,
                                                                     @RequestParam(required = false) Long endOfDate,
                                                                     @RequestParam(defaultValue = DEFAULT_SEARCH) String search,
                                                                     @RequestParam(defaultValue = DEFAULT_PAGE) int page,
@@ -97,7 +86,7 @@ public class MultipleChoiceTestController {
     }
     @PreAuthorize("hasRole('STUDENT')")
     @GetMapping(value = "/me/next-two-weeks", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getMyMultipleChoiceTestsNext2Weeks( @RequestParam(defaultValue = DEFAULT_SEARCH) String search,
+    public ApiResponse<?> getMyMultipleChoiceTestsNext2Weeks( @RequestParam(defaultValue = DEFAULT_SEARCH) String search,
                                                                  @RequestParam(defaultValue = DEFAULT_PAGE) int page,
                                                                  @RequestParam(defaultValue = DEFAULT_COLUMN) String column,
                                                                  @RequestParam(defaultValue = DEFAULT_SIZE) int size,
@@ -106,9 +95,9 @@ public class MultipleChoiceTestController {
                 getMyMultipleChoiceTestsNext2Weeks(search, page, column, size, sortType);
     }
 
-    @GetMapping(value = "/classroom/{classroomId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getMultipleChoiceTestsOfClassroom(
-            @PathVariable(name = "classroomId") Long classroomId,
+    @GetMapping(value = "/subject/{subjectId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ApiResponse<?> getMultipleChoiceTestsOfClassroom(
+            @PathVariable(name = "subjectId") Long subjectId,
             @RequestParam(defaultValue = DEFAULT_SEARCH) String search,
             @RequestParam(defaultValue = DEFAULT_PAGE) int page,
             @RequestParam(defaultValue = DEFAULT_COLUMN) String column,
@@ -117,13 +106,13 @@ public class MultipleChoiceTestController {
             @RequestParam(defaultValue = "false") boolean isEnded
     ){
         return multipleChoiceTestService.
-                getMultipleChoiceTestsOfClassroom(classroomId, isEnded, search, page, column, size, sortType);
+                getMultipleChoiceTestsOfClassroom(subjectId, isEnded, search, page, column, size, sortType);
     }
 
-    @GetMapping(value = "/my/classroom/{classroomId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/my/subject/{subjectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<?> getMyMultipleChoiceTestsOfClassroom(
-            @PathVariable(name = "classroomId") Long classroomId,
+    public ApiResponse<?> getMyMultipleChoiceTestsOfClassroom(
+            @PathVariable(name = "subjectId") Long subjectId,
             @RequestParam(defaultValue = DEFAULT_SEARCH) String search,
             @RequestParam(defaultValue = DEFAULT_PAGE) int page,
             @RequestParam(defaultValue = DEFAULT_COLUMN) String column,
@@ -132,35 +121,35 @@ public class MultipleChoiceTestController {
             @RequestParam(defaultValue = "false") boolean isEnded
     ){
         return multipleChoiceTestService.
-                getMyMultipleChoiceTestsOfClassroom(classroomId, isEnded, search, page, column, size, sortType);
+                getMyMultipleChoiceTestsOfClassroom(subjectId, isEnded, search, page, column, size, sortType);
     }
 
     @PostMapping(value = "/create", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> createMultipleChoiceTest(@Valid @RequestBody CreateMultipleChoiceTestDTO DTO){
-        try {
+    public ApiResponse<?> createMultipleChoiceTest(@Valid @RequestBody CreateMultipleChoiceTestDTO DTO){
+//        try {
             return multipleChoiceTestService.createMultipleChoiceTest(DTO);
-        } catch (NotEnoughQuestionException ex) {
-            LinkedHashMap<String, String> response = new LinkedHashMap<>();
-            response.put(Constants.ERROR_CODE_KEY, ErrorMessage.NOT_ENOUGH_QUESTION.getErrorCode());
-            response.put(Constants.MESSAGE_KEY, String.format(ErrorMessage.NOT_ENOUGH_QUESTION.getMessage(), ex.getMessage()));
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(response);
-        } catch (QuestionNotFoundException ex) {
-            return CustomBuilder.buildQuestionNotFoundResponseEntity();
-        } catch (QuestionGroupNotFoundException ex) {
-            return CustomBuilder.buildQuestionGroupNotFoundResponseEntity();
-        }
+//        } catch (NotEnoughQuestionException ex) {
+//            LinkedHashMap<String, String> response = new LinkedHashMap<>();
+//            response.put(Constants.ERROR_CODE_KEY, ErrorMessage.NOT_ENOUGH_QUESTION.getErrorCode());
+//            response.put(Constants.MESSAGE_KEY, String.format(ErrorMessage.NOT_ENOUGH_QUESTION.getMessage(), ex.getMessage()));
+//            return ApiResponse.status(HttpStatus.BAD_REQUEST)
+//                    .contentType(MediaType.APPLICATION_JSON)
+//                    .body(response);
+//        } catch (QuestionNotFoundException ex) {
+//            return CustomBuilder.buildQuestionNotFoundApiResponse();
+//        } catch (QuestionGroupNotFoundException ex) {
+//            return CustomBuilder.buildQuestionGroupNotFoundApiResponse();
+//        }
     }
     @DeleteMapping(value = "/delete/{testId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> deleteMultipleChoiceTest(@PathVariable(name = "testId") Long testId){
+    public ApiResponse<?> deleteMultipleChoiceTest(@PathVariable(name = "testId") Long testId){
         return multipleChoiceTestService.deleteMultipleChoiceTest(testId);
     }
     @PutMapping(value = "/update/info/{testId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> updateMultipleChoiceTest(@PathVariable(name = "testId") Long testId,
+    public ApiResponse<?> updateMultipleChoiceTest(@PathVariable(name = "testId") Long testId,
                                              @RequestBody UpdateMultipleChoiceTestDTO DTO){
         return multipleChoiceTestService.updateMultipleChoiceTest(testId, DTO);
     }

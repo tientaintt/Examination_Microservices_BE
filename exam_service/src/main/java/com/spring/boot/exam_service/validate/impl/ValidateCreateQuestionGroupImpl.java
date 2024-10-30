@@ -4,7 +4,7 @@ package com.spring.boot.exam_service.validate.impl;
 import com.spring.boot.exam_service.constants.Constants;
 import com.spring.boot.exam_service.constants.ErrorMessage;
 import com.spring.boot.exam_service.dto.request.CreateQuestionGroupDTO;
-import com.spring.boot.exam_service.repository.ClassroomRepository;
+import com.spring.boot.exam_service.repository.SubjectRepository;
 import com.spring.boot.exam_service.repository.QuestionGroupRepository;
 import com.spring.boot.exam_service.validate.ValidateCreateQuestionGroup;
 import com.spring.boot.exam_service.validate.ValidateUtils;
@@ -23,10 +23,10 @@ import java.util.Objects;
 public class ValidateCreateQuestionGroupImpl implements ConstraintValidator<ValidateCreateQuestionGroup, CreateQuestionGroupDTO> {
 
     private final QuestionGroupRepository questionGroupRepository;
-    private final ClassroomRepository classroomRepository;
+    private final SubjectRepository subjectRepository;
     private static final String CODE = "code";
     private static final String NAME = "name";
-    private static final String CLASSROOM_ID = "classroomId";
+    private static final String CLASSROOM_ID = "subjectId";
     private static final String CODE_PREFIX = "group_";
     private static final String DESCRIPTION = "description";
     @Override
@@ -57,20 +57,20 @@ public class ValidateCreateQuestionGroupImpl implements ConstraintValidator<Vali
     }
 
     private boolean validateQuestionGroupClassroomId(CreateQuestionGroupDTO value, ConstraintValidatorContext context) {
-        log.info("Start validate classroomId when creating question group");
-        if(Objects.isNull(value.getClassroomId())){
+        log.info("Start validate subjectId when creating question group");
+        if(Objects.isNull(value.getSubjectId())){
             context.buildConstraintViolationWithTemplate(ErrorMessage.COMMON_FIELD_REQUIRED.name())
                     .addPropertyNode(CLASSROOM_ID)
                     .addConstraintViolation();
             return Boolean.FALSE;
         }
-        if(classroomRepository.findById(value.getClassroomId()).isEmpty()){
-            context.buildConstraintViolationWithTemplate(ErrorMessage.CLASSROOM_NOT_FOUND.name())
+        if(subjectRepository.findById(value.getSubjectId()).isEmpty()){
+            context.buildConstraintViolationWithTemplate(ErrorMessage.SUBJECT_NOT_FOUND.name())
                     .addPropertyNode(CLASSROOM_ID)
                     .addConstraintViolation();
             return Boolean.FALSE;
         }
-        log.info("End validate classroomId when creating question group");
+        log.info("End validate subjectId when creating question group");
         return Boolean.TRUE;
     }
 

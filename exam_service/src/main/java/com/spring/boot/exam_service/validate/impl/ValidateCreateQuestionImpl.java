@@ -40,17 +40,13 @@ public class ValidateCreateQuestionImpl implements ConstraintValidator<ValidateC
 
     private boolean validateAnswers(CreateQuestionDTO value, ConstraintValidatorContext context) {
         log.info("Validate Answers of question: start");
-        boolean checkFirstAnswer = validateAnswer(value.getFirstAnswer(), context, firstAnswer);
-        boolean checkSecondAnswer = validateAnswer(value.getSecondAnswer(), context, secondAnswer);
-        boolean checkThirdAnswer = validateAnswer(value.getThirdAnswer(), context, thirdAnswer);
-        boolean checkFourthAnswer = validateAnswer(value.getFourthAnswer(), context, fourthAnswer);
-
-        boolean isAllValidAnswer = ValidateUtils.isAllTrue(List.of(
-                checkFirstAnswer,
-                checkSecondAnswer,
-                checkThirdAnswer,
-                checkFourthAnswer
-        ));
+        List<Boolean> checks=value.getAnswers().stream().map(answer -> validateAnswer(answer,context,answer.getAnswerContent())).toList();
+//        boolean checkFirstAnswer = validateAnswer(value.getFirstAnswer(), context, firstAnswer);
+//        boolean checkSecondAnswer = validateAnswer(value.getSecondAnswer(), context, secondAnswer);
+//        boolean checkThirdAnswer = validateAnswer(value.getThirdAnswer(), context, thirdAnswer);
+//        boolean checkFourthAnswer = validateAnswer(value.getFourthAnswer(), context, fourthAnswer);
+        log.info("Validate Answers of question: loading");
+        boolean isAllValidAnswer = ValidateUtils.isAllTrue(checks);
         boolean checkOnlyOneCorrect = false;
         if(isAllValidAnswer){
             checkOnlyOneCorrect = validateOnlyOneCorrect(value, context);
@@ -61,12 +57,8 @@ public class ValidateCreateQuestionImpl implements ConstraintValidator<ValidateC
 
     private boolean validateOnlyOneCorrect(CreateQuestionDTO value, ConstraintValidatorContext context) {
         log.info("Validate Only One Correct: start");
-        boolean isOnlyOneTrueAnswer = ValidateUtils.isOnlyOneTrue(List.of(
-                Objects.requireNonNullElse(value.getFirstAnswer().getIsCorrect(), false),
-                Objects.requireNonNullElse(value.getSecondAnswer().getIsCorrect(), false),
-                Objects.requireNonNullElse(value.getThirdAnswer().getIsCorrect(), false),
-                Objects.requireNonNullElse(value.getFourthAnswer().getIsCorrect(), false)
-        ));
+        List<Boolean> checks=value.getAnswers().stream().map(answer ->  Objects.requireNonNullElse(answer.getIsCorrect(), false)).toList();
+        boolean isOnlyOneTrueAnswer = ValidateUtils.isOnlyOneTrue(checks);
         if (!isOnlyOneTrueAnswer){
             context.buildConstraintViolationWithTemplate(ErrorMessage.QUESTION_CREATE_MUST_HAVE_ONE_TRUE_ANSWER.name())
                     .addPropertyNode(CONTENT)

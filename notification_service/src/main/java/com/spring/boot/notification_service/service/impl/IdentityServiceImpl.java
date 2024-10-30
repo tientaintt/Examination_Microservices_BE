@@ -1,23 +1,20 @@
 package com.spring.boot.notification_service.service.impl;
 
-import com.fasterxml.jackson.core.JsonParser;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spring.boot.notification_service.dto.request.UserRequest;
 import com.spring.boot.notification_service.dto.response.APIResponse;
 import com.spring.boot.notification_service.repository.httpclient.IdentityClient;
 import com.spring.boot.notification_service.service.IdentityService;
-import jakarta.persistence.Id;
+
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
+
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedHashMap;
 
 
 @Service

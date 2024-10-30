@@ -11,6 +11,6 @@ import lombok.experimental.FieldDefaults;
 @ValidateAuthentication
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AuthenticationRequest {
-    String username;
+    String loginName;
     String password;
 }

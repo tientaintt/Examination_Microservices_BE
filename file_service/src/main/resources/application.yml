@@ -1,0 +1,16 @@
+server:
+  port: 8085
+  servlet:
+    context-path: /file
+spring:
+  main:
+    allow-circular-references: true
+    allow-bean-definition-overriding: true
+  data:
+    mongodb:
+      url: mongodb+srv://root:root@cluster0.1zgpkzb.mongodb.net/?retryWrites=true&w=majority/notification_service
+
+
+app:
+  services:
+    identity: http://localhost:8080/identity

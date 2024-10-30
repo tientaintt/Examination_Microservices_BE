@@ -72,7 +72,7 @@ public class ValidateAuthenticationImpl implements ConstraintValidator<ValidateA
      *  - False if any validate is false
      */
     private boolean validateLoginName(AuthenticationRequest value, ConstraintValidatorContext context) {
-        if(Objects.isNull(value.getUsername()) || value.getUsername().isBlank()){
+        if(Objects.isNull(value.getLoginName()) || value.getLoginName().isBlank()){
             context.buildConstraintViolationWithTemplate(ErrorMessage.COMMON_FIELD_REQUIRED.name())
                     .addPropertyNode(LOGIN_NAME)
                     .addConstraintViolation();

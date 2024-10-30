@@ -22,7 +22,7 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     @Query(value = "select * FROM question where " +
             "question_group_id = :questionGroupId " +
             "and is_enable = :isActiveQuestion " +
-            "and (content like :searchText)", nativeQuery = true)
+            "and (content LIKE %:searchText% OR :searchText IS NULL OR :searchText = '')", nativeQuery = true)
     Page<Question> getQuestionsOfQuestionGroupByQuestionGroupId(Long questionGroupId,String searchText, boolean isActiveQuestion, Pageable pageable);
 
     @Query(value = "SELECT * FROM question where \n" +
@@ -35,7 +35,12 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
             "q.is_enable = :isActiveQuestion  \n" +
             "and (q.content like :searchText) \n" +
             "and  q.question_group_id \n" +
-            "\tIN (SELECT id FROM question_group qg where qg.class_room_id = :classroomId)", nativeQuery = true)
-    Page<Question> getQuestionsOfClassroom(Long classroomId, String searchText, boolean isActiveQuestion, Pageable pageable);
+            "\tIN (SELECT id FROM question_group qg where qg.subject" +
+            "_id = :subjectId)", nativeQuery = true)
+    Page<Question> getQuestionsOfClassroom(Long subjectId, String searchText, boolean isActiveQuestion, Pageable pageable);
     Long countQuestionsByQuestionGroupId(Long questionGroupId);
+    @Query("SELECT q.content " +
+            "FROM Question q " +
+            "where q.id=:questionId")
+    String getContentQuestionByQuestionId(Long questionId);
 }

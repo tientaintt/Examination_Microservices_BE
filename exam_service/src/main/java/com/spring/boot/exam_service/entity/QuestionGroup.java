@@ -36,7 +36,7 @@ public class QuestionGroup extends AbstractAuditingEntity {
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private Classroom classRoom;
+    private Subject subject;
 
     @OneToMany(
             mappedBy = "questionGroup",

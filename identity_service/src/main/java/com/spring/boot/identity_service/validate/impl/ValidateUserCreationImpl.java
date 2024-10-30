@@ -77,13 +77,13 @@ public record ValidateUserCreationImpl(
                     .addConstraintViolation();
             return Boolean.FALSE;
         }
-//        Optional<User> userProfileOp = userRepository.findOneByEmailAddressVerified(value.getEmailAddress());
-//        if (userProfileOp.isPresent()){
-//            context.buildConstraintViolationWithTemplate(ErrorMessage.SIGNUP_EMAIL_ADDRESS_DUPLICATE.name())
-//                    .addPropertyNode(EMAIL_ADDRESS)
-//                    .addConstraintViolation();
-//            return Boolean.FALSE;
-//        }
+        Optional<User> userProfileOp = userRepository.findOneByEmailAddressVerified(value.getEmailAddress());
+        if (userProfileOp.isPresent()){
+            context.buildConstraintViolationWithTemplate(ErrorMessage.SIGNUP_EMAIL_ADDRESS_DUPLICATE.name())
+                    .addPropertyNode(EMAIL_ADDRESS)
+                    .addConstraintViolation();
+            return Boolean.FALSE;
+        }
         return true;
     }
 

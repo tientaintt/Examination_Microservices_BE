@@ -9,7 +9,7 @@ import java.util.Optional;
 @Repository
 public interface TestTrackingRepository extends JpaRepository<TestTracking,Long> {
 
-    Optional<TestTracking> findByMultipleChoiceTestIdAndUserProfileUserID(Long testId, Long studentId);
+    Optional<TestTracking> findByMultipleChoiceTestIdAndUserID(Long testId, String studentId);
 
 
 }

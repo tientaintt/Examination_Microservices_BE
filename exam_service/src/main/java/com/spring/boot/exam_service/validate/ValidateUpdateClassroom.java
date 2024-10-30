@@ -1,13 +1,13 @@
 package com.spring.boot.exam_service.validate;
 
-import com.spring.boot.exam_service.validate.impl.ValidateUpdateClassroomImpl;
+import com.spring.boot.exam_service.validate.impl.ValidateUpdateSubjectImpl;
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
 
 import java.lang.annotation.*;
 
 @Documented
-@Constraint(validatedBy = ValidateUpdateClassroomImpl.class)
+@Constraint(validatedBy = ValidateUpdateSubjectImpl.class)
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface ValidateUpdateClassroom {

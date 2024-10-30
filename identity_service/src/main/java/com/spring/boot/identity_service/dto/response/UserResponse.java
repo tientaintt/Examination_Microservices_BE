@@ -18,6 +18,7 @@ public class UserResponse {
     String displayName;
     String emailAddress;
     String newEmailAddress;
+    String imageUrl;
     Boolean isEmailAddressVerified;
     Boolean isEnable;
     List<String> roles;

@@ -12,6 +12,6 @@ public interface AuthenticationService {
 
     void logout(LogoutRequest logoutRequest) throws Exception;
 
-    AuthenticationResponse refreshToken(RefreshRequest request) throws Exception;
+    AuthenticationResponse refreshToken(RefreshRequest request) ;
     IntrospectResponse introspect(IntrospectRequest introspectRequest) ;
 }

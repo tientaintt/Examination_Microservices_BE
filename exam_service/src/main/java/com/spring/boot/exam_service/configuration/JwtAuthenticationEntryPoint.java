@@ -1,10 +1,9 @@
 package com.spring.boot.exam_service.configuration;
 
 
-import com.devteria.profile.dto.ApiResponse;
-import com.devteria.profile.exception.ErrorCode;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.spring.boot.exam_service.dto.ApiResponse;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.MediaType;

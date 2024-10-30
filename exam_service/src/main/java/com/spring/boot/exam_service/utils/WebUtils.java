@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class WebUtils {
 //    private UserProfileRepository userProfileRepository;
-    public Object getCurrentLogedInUser() {
+    public Object getCurrentLoggedInUser() {
         // Get current logged in user
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 //        return userProfileRepository.findOneByLoginName(auth.getName()).orElseThrow(

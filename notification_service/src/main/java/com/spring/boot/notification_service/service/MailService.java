@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 
 public interface MailService {
-    void sendTestCreatedNotificationEmail(Long classroomId, MultipleChoiceTestRequest multipleChoiceTest);
+    void sendTestCreatedNotificationEmail(Long subjectId, MultipleChoiceTestRequest multipleChoiceTest);
 
     void sendTestDeletedNotificationEmail(MultipleChoiceTestRequest multipleChoiceTest);
     void sendTestUpdatedNotificationEmail(MultipleChoiceTestRequest multipleChoiceTest);

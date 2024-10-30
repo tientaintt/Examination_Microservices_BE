@@ -43,10 +43,9 @@ import java.util.stream.Collectors;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService {
     TestQuestionRepository testQuestionRepository;
-
-
+    AnswerRepository answerRepository;
     MultipleChoiceTestRepository multipleChoiceTestRepository;
-    ClassroomRepository classroomRepository;
+    SubjectRepository subjectRepository;
     QuestionRepository questionRepository;
     QuestionService questionService;
     //    private final MailService mailService;
@@ -65,14 +64,14 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
         List<Question> questions = questionRepository.findAllByIds(questionIds);
         List<QuestionResponse> questionsOfTheTest =
                 questions.stream()
-                        .map(CustomBuilder::buildQuestionResponse)
+                        .map(question -> CustomBuilder.buildQuestionResponse(question,answerRepository.findListAnswerByIdQuestion(question.getId())))
                         .collect(Collectors.toList());
         MultipleChoiceTestWithQuestionsResponse response =
                 CustomBuilder.buildMultipleChoiceTestWithQuestionsResponse(multipleChoiceTest, questionsOfTheTest);
         Optional<Score> score = scoreRepository.findByMultipleChoiceTestIdAndUserID(response.getId(), myId);
         response.setIsSubmitted(score.isPresent());
 
-        return ApiResponse.builder().build();
+        return ApiResponse.builder().data(response).build();
     }
 
     @Override
@@ -149,26 +148,26 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
             multipleChoiceTests = multipleChoiceTestRepository.
                     findMyNotEndedMultipleChoiceTests(myId,unixTimeNow, searchText, pageable);
         }
-        return ApiResponse.builder().build();
+        return ApiResponse.builder().data(multipleChoiceTests).build();
 
     }
 
     @Override
-    public ApiResponse<?> getMultipleChoiceTestsOfClassroom(Long classroomId, boolean isEnded, String search, int page, String column, int size, String sortType) {
+    public ApiResponse<?> getMultipleChoiceTestsOfClassroom(Long subjectId, boolean isEnded, String search, int page, String column, int size, String sortType) {
         Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
-        Optional<Classroom> classRoom = classroomRepository.findById(classroomId);
+        Optional<Subject> classRoom = subjectRepository.findById(subjectId);
         if (classRoom.isEmpty()) {
-            throw new AppException(ErrorCode.CLASSROOM_NOT_FOUND);
+            throw new AppException(ErrorCode.SUBJECT_NOT_FOUND);
         }
         String searchText = "%" + search.trim() + "%";
         Long unixTimeNow = Timestamp.from(ZonedDateTime.now().toInstant()).getTime();
         Page<MultipleChoiceTest> multipleChoiceTests;
         if (isEnded) {
             multipleChoiceTests = multipleChoiceTestRepository.
-                    findEndedMultipleChoiceTestOfClassroomByClassroomId(classroomId, unixTimeNow, searchText, pageable);
+                    findEndedMultipleChoiceTestOfClassroomByClassroomId(subjectId, unixTimeNow, searchText, pageable);
         } else {
             multipleChoiceTests = multipleChoiceTestRepository.
-                    findNotEndedMultipleChoiceTestOfClassroomByClassroomId(classroomId, unixTimeNow, searchText, pageable);
+                    findNotEndedMultipleChoiceTestOfClassroomByClassroomId(subjectId, unixTimeNow, searchText, pageable);
         }
         Page<MultipleChoiceTestResponse> response = multipleChoiceTests.map(CustomBuilder::buildMultipleChoiceTestResponse);
         return ApiResponse.builder()
@@ -177,22 +176,22 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
     }
 
     @Override
-    public ApiResponse<?> getMyMultipleChoiceTestsOfClassroom(Long classroomId, boolean isEnded, String search, int page, String column, int size, String sortType) {
+    public ApiResponse<?> getMyMultipleChoiceTestsOfClassroom(Long subjectId, boolean isEnded, String search, int page, String column, int size, String sortType) {
         String myId = identityService.getCurrentUser().getId();
         Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
-        Optional<Classroom> classRoom =  classroomRepository.findById(classroomId);
+        Optional<Subject> classRoom =  subjectRepository.findById(subjectId);
         if (classRoom.isEmpty()){
-            throw new AppException(ErrorCode.CLASSROOM_NOT_FOUND);
+            throw new AppException(ErrorCode.SUBJECT_NOT_FOUND);
         }
         String searchText = "%" + search.trim() + "%";
         Long unixTimeNow = Timestamp.from(ZonedDateTime.now().toInstant()).getTime();
         Page<MultipleChoiceTest> multipleChoiceTests;
         if (isEnded) {
             multipleChoiceTests = multipleChoiceTestRepository.
-                    findEndedMultipleChoiceTestOfClassroomByClassroomId(classroomId,unixTimeNow, searchText, pageable);
+                    findEndedMultipleChoiceTestOfClassroomByClassroomId(subjectId,unixTimeNow, searchText, pageable);
         } else {
             multipleChoiceTests = multipleChoiceTestRepository.
-                    findNotEndedMultipleChoiceTestOfClassroomByClassroomId(classroomId,unixTimeNow, searchText, pageable);
+                    findNotEndedMultipleChoiceTestOfClassroomByClassroomId(subjectId,unixTimeNow, searchText, pageable);
         }
         Page<MultipleChoiceTestResponse> response = multipleChoiceTests.map(CustomBuilder::buildMultipleChoiceTestResponse);
 
@@ -258,7 +257,7 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
         }
         multipleChoiceTest = multipleChoiceTestRepository.save(multipleChoiceTest);
         MultipleChoiceTestResponse response = CustomBuilder.buildMultipleChoiceTestResponse(multipleChoiceTest);
-        mailService.sendTestUpdatedNotificationEmail(multipleChoiceTest);
+//        mailService.sendTestUpdatedNotificationEmail(multipleChoiceTest);
         return ApiResponse.builder().data(response).build();
     }
 
@@ -279,7 +278,7 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
 //                    .body(response);
             throw new AppException(ErrorCode.MULTIPLE_CHOICE_TEST_DELETE_STARTED_TEST_ERROR);
         }
-        mailService.sendTestDeletedNotificationEmail(multipleChoiceTest);
+//        mailService.sendTestDeletedNotificationEmail(multipleChoiceTest);
         multipleChoiceTestRepository.deleteById(testId);
         return ApiResponse.builder().build();
     }
@@ -287,14 +286,14 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
     @Override
     @Transactional(rollbackFor = {Exception.class, Throwable.class})
     public ApiResponse<?> createMultipleChoiceTest(CreateMultipleChoiceTestDTO dto) {
-        Classroom classroom = classroomRepository.findById(dto.getClassroomId()).get();
+        Subject subject = subjectRepository.findById(dto.getSubjectId()).get();
         MultipleChoiceTest multipleChoiceTest = new MultipleChoiceTest();
         multipleChoiceTest.setTestName(dto.getTestName());
         multipleChoiceTest.setDescription(dto.getDescription());
         multipleChoiceTest.setStartDate(dto.getStartDate());
         multipleChoiceTest.setEndDate(dto.getEndDate());
         multipleChoiceTest.setTestingTime(dto.getTestingTime());
-        multipleChoiceTest.setClassRoom(classroom);
+        multipleChoiceTest.setSubject(subject);
         multipleChoiceTest.setTargetScore(dto.getTargetScore());
         modifyUpdateMultipleChoiceTest(multipleChoiceTest);
         multipleChoiceTest = multipleChoiceTestRepository.save(multipleChoiceTest);
@@ -311,7 +310,7 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
         MultipleChoiceTestWithQuestionsResponse response = CustomBuilder.buildMultipleChoiceTestWithQuestionsResponse(multipleChoiceTest, questionsOfTheTest);
 
         // Send notification email to student in this classroom
-        mailService.sendTestCreatedNotificationEmail(dto.getClassroomId(), multipleChoiceTest);
+//        mailService.sendTestCreatedNotificationEmail(dto.getClassroomId(), multipleChoiceTest);
         return ApiResponse.builder().data(response).build();
     }
 
@@ -335,7 +334,7 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
             UserRequest userProfile = identityService.getCurrentUser();
             testQuestion.setCreatedBy(userProfile.getLoginName());
             testQuestionRepository.save(testQuestion);
-            questionResponses.add(CustomBuilder.buildQuestionResponse(question));
+            questionResponses.add(CustomBuilder.buildQuestionResponse(question,answerRepository.findListAnswerByIdQuestion(question.getId())));
         });
         return new ArrayList<>();
     }
@@ -358,11 +357,11 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
             UserRequest userProfile = identityService.getCurrentUser();
             testQuestion.setCreatedBy(userProfile.getLoginName());
             testQuestions.add(testQuestion);
-            questionResponses.add(CustomBuilder.buildQuestionResponse(question));
+            questionResponses.add(CustomBuilder.buildQuestionResponse(question,answerRepository.findListAnswerByIdQuestion(question.getId())));
         });
         // Only save when finding all the questions by list questionId
         testQuestionRepository.saveAll(testQuestions);
-        return new ArrayList<>();
+        return questionResponses;
     }
 
     private void modifyUpdateMultipleChoiceTest(MultipleChoiceTest multipleChoiceTest) {

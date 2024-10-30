@@ -3,7 +3,7 @@ package com.spring.boot.exam_service.validate.impl;
 
 import com.spring.boot.exam_service.constants.Constants;
 import com.spring.boot.exam_service.dto.request.UpdateQuestionGroupDTO;
-import com.spring.boot.exam_service.repository.ClassroomRepository;
+import com.spring.boot.exam_service.repository.SubjectRepository;
 import com.spring.boot.exam_service.repository.QuestionGroupRepository;
 import com.spring.boot.exam_service.validate.ValidateUpdateQuestionGroup;
 import com.spring.boot.exam_service.validate.ValidateUtils;
@@ -20,10 +20,10 @@ import java.util.List;
 public class ValidateUpdateQuestionGroupImpl implements ConstraintValidator<ValidateUpdateQuestionGroup, UpdateQuestionGroupDTO> {
 
     private final QuestionGroupRepository questionGroupRepository;
-    private final ClassroomRepository classroomRepository;
+    private final SubjectRepository subjectRepository;
     private static final String CODE = "code";
     private static final String NAME = "name";
-    private static final String CLASSROOM_ID = "classroomId";
+    private static final String CLASSROOM_ID = "subjectId";
     private static final String CODE_PREFIX = "group_";
     private static final String DESCRIPTION = "description";
 

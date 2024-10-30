@@ -25,7 +25,7 @@ public class QuestionType  extends  AbstractAuditingEntity{
     Long id;
 
     @Column(name = TYPE_QUESTION)
-    String type_question;
+    String typeQuestion;
 
     @OneToMany(
             mappedBy = "questionType",

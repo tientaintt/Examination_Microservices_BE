@@ -4,6 +4,8 @@ package com.spring.boot.exam_service.dto.request;
 import com.spring.boot.exam_service.validate.ValidateCreateQuestion;
 import lombok.*;
 
+import java.util.List;
+
 
 @Setter
 @Getter
@@ -13,10 +15,9 @@ import lombok.*;
 @ValidateCreateQuestion
 public class CreateQuestionDTO {
     private String content;
-    private Answer firstAnswer;
-    private Answer secondAnswer;
-    private Answer thirdAnswer;
-    private Answer fourthAnswer;
+    private List<Answer> answers;
+    private String questionType;
+
     private Long questionGroupId;
 
     @Setter

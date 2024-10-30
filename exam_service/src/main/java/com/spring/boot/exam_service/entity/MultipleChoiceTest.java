@@ -45,7 +45,7 @@ public class MultipleChoiceTest extends AbstractAuditingEntity {
     private Long testingTime; // minutes
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private Classroom classRoom;
+    private Subject subject;
 
     @Column(name = TARGET_SCORE)
     private Double targetScore;

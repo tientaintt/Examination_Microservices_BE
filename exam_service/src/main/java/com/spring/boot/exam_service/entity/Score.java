@@ -44,7 +44,7 @@ public class Score extends AbstractAuditingEntity {
     private MultipleChoiceTest multipleChoiceTest;
 
 
-    private String userId;
+    private String userID;
 
     @OneToMany(
             mappedBy = "score",

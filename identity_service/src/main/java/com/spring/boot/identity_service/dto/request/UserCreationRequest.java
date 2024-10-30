@@ -1,7 +1,7 @@
 package com.spring.boot.identity_service.dto.request;
 
 import com.spring.boot.identity_service.validate.ValidateUserCreation;
-import jakarta.validation.constraints.Size;
+
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

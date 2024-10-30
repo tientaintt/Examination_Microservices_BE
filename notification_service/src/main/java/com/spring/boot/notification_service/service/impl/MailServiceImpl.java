@@ -15,6 +15,7 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -37,17 +38,22 @@ import java.util.*;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class MailServiceImpl implements MailService {
     private static final String CONTENT_TYPE_TEXT_HTML = "text/html;charset=\"utf-8\"";
-
+@NonFinal
     @Value("${config.mail.host}")
     protected String host="smtp.gmail.com";
+    @NonFinal
     @Value("${config.mail.port}")
     protected  String port="587";
+    @NonFinal
     @Value("${config.mail.username}")
-    protected  String email="phancongtu25032002@gmail.com";
+    protected String email;
+    @NonFinal
     @Value("${config.mail.password}")
-    protected String password="udvepsndgybmyzye";
+    protected String password;
+    @NonFinal
     @Value("${send-by-mail.verification-code-time}")
     protected Long verificationCodeTime=30L;
+    @NonFinal
     @Value("${send-by-mail.reset-password-code-time}")
     protected  Long resetPasswordCodeTime=15L;
 
@@ -83,9 +89,8 @@ public class MailServiceImpl implements MailService {
     @Override
     @Async
     public void sendTestUpdatedNotificationEmail(MultipleChoiceTestRequest multipleChoiceTest) {
-        List<String> registerUserEmails =
-                classroomRegistrationRepository.findUserEmailOfClassroom(multipleChoiceTest.getClassRoom().getId());
-        sendEmailTestUpdatedNotification(multipleChoiceTest, registerUserEmails);
+
+        sendEmailTestUpdatedNotification(multipleChoiceTest, multipleChoiceTest.getRegisterUserEmails());
     }
 
     @Async
@@ -115,18 +120,16 @@ public class MailServiceImpl implements MailService {
 
     @Override
     @Async
-    public void sendTestCreatedNotificationEmail(Long classroomId, MultipleChoiceTestRequest multipleChoiceTest) {
-    List<String> registerUserEmails =
-            classroomRegistrationRepository.findUserEmailOfClassroom(classroomId);
-        sendEmailTestCreatedNotification(registerUserEmails, multipleChoiceTest);
+    public void sendTestCreatedNotificationEmail(Long subjectId, MultipleChoiceTestRequest multipleChoiceTest) {
+
+        sendEmailTestCreatedNotification(multipleChoiceTest.getRegisterUserEmails(), multipleChoiceTest);
     }
 
     @Override
     @Async
     public void sendTestDeletedNotificationEmail(MultipleChoiceTestRequest multipleChoiceTest) {
-        List<String> registerUserEmails =
-                classroomRegistrationRepository.findUserEmailOfClassroom(multipleChoiceTest.getClassRoom().getId());
-        sendEmailTestDeletedNotification(registerUserEmails, multipleChoiceTest);
+
+        sendEmailTestDeletedNotification(multipleChoiceTest.getRegisterUserEmails(), multipleChoiceTest);
     }
     @Async
     protected void sendEmailTestDeletedNotification(List<String> registerUserEmails, MultipleChoiceTestRequest multipleChoiceTest) {

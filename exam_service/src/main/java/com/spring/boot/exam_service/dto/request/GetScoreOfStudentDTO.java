@@ -11,6 +11,6 @@ import lombok.*;
 @Builder
 @ValidateGetScoreOfStudent
 public class GetScoreOfStudentDTO {
-    private Long studentId;
+    private String studentId;
     private Long multipleChoiceTestId;
 }

@@ -13,7 +13,7 @@ public interface MultipleChoiceTestService {
 
     ApiResponse<?> updateMultipleChoiceTest(Long testId, UpdateMultipleChoiceTestDTO dto);
 
-    ApiResponse<?> getMultipleChoiceTestsOfClassroom(Long classroomId,boolean isEnded, String search, int page, String column, int size, String sortType);
+    ApiResponse<?> getMultipleChoiceTestsOfClassroom(Long subjectId,boolean isEnded, String search, int page, String column, int size, String sortType);
 
     ApiResponse<?> getMyMultipleChoiceTests(boolean isEnded, String search, int page, String column, int size, String sortType);
 
@@ -25,5 +25,5 @@ public interface MultipleChoiceTestService {
     ApiResponse<?> getMyMultipleChoiceTestsToday(Long startOfDate,Long endOfDate, String search, int page, String column, int size, String sortType);
     ApiResponse<?> getInfoMultipleChoiceTest(Long testId);
 
-    ApiResponse<?> getMyMultipleChoiceTestsOfClassroom(Long classroomId, boolean isEnded, String search, int page, String column, int size, String sortType);
+    ApiResponse<?> getMyMultipleChoiceTestsOfClassroom(Long subjectId, boolean isEnded, String search, int page, String column, int size, String sortType);
 }

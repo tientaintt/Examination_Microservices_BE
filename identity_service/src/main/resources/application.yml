@@ -14,7 +14,10 @@ spring:
     show-sql: true
 jwt:
   signerKey: "itz0ej7d9e70sl5q1s2g72wsxmqkrkx3"
-  refresh-token-expiration: 90
-
+  access-token-expiration: 5 #minutes
+  refresh-token-expiration: 90 #day
 send-by-mail:
   verification-code-time: 30 #minutes
+app:
+  services:
+    file: http://localhost:8085/file

@@ -23,4 +23,6 @@ public class AnswerQuestion extends AbstractAuditingEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     Answer answer;
+    @Column
+    Boolean isCorrect;
 }

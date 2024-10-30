@@ -1,2 +1,14 @@
-package com.spring.boot.identity_service.dto.request;public class UserIdsRequest {
+package com.spring.boot.identity_service.dto.request;
+
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+import java.util.List;
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class UserIdsRequest {
+    List<String> userIds;
 }

@@ -41,17 +41,12 @@ public class ValidateUpdateQuestionImpl implements ConstraintValidator<ValidateU
     }
 
     private boolean validateAnswers(UpdateQuestionDTO value, ConstraintValidatorContext context) {
-        boolean checkFirstAnswer = validateAnswer(value.getFirstAnswer(), context, FIRSTANSWER);
-        boolean checkSecondAnswer = validateAnswer(value.getSecondAnswer(), context, SECONDANSWER);
-        boolean checkThirdAnswer = validateAnswer(value.getThirdAnswer(), context, THIRDANSWER);
-        boolean checkFourthAnswer = validateAnswer(value.getFourthAnswer(), context, FOURTHANSWER);
-
-        boolean isAllValidAnswer = ValidateUtils.isAllTrue(List.of(
-                checkFirstAnswer,
-                checkSecondAnswer,
-                checkThirdAnswer,
-                checkFourthAnswer
-        ));
+//        boolean checkFirstAnswer = validateAnswer(value.getFirstAnswer(), context, FIRSTANSWER);
+//        boolean checkSecondAnswer = validateAnswer(value.getSecondAnswer(), context, SECONDANSWER);
+//        boolean checkThirdAnswer = validateAnswer(value.getThirdAnswer(), context, THIRDANSWER);
+//        boolean checkFourthAnswer = validateAnswer(value.getFourthAnswer(), context, FOURTHANSWER);
+        List<Boolean> checks = value.getAnswers().stream().map(answer -> validateAnswerUpdate(answer, context, answer.getAnswerContent())).toList();
+        boolean isAllValidAnswer = ValidateUtils.isAllTrue(checks);
         boolean checkOnlyOneCorrect = false;
         if (isAllValidAnswer) {
             // The request must have one true answer
@@ -62,33 +57,36 @@ public class ValidateUpdateQuestionImpl implements ConstraintValidator<ValidateU
 
     private boolean validateOnlyOneCorrect(UpdateQuestionDTO value, ConstraintValidatorContext context) {
         log.info("Validate Only One Correct: start");
-        List<Boolean> checkAnswers = new ArrayList<>();
-        if (Objects.nonNull(value.getFirstAnswer())) {
-            checkAnswers.add(Objects.requireNonNullElse(value.getFirstAnswer().getIsCorrect(), false));
+        List<Boolean> checks = value.getAnswers().stream().map(answer -> Objects.requireNonNullElse(answer.getIsCorrect(), false)).toList();
+        boolean isOnlyOneTrueAnswer = ValidateUtils.isOnlyOneTrue(checks);
+        if (!isOnlyOneTrueAnswer) {
+            context.buildConstraintViolationWithTemplate(ErrorMessage.QUESTION_CREATE_MUST_HAVE_ONE_TRUE_ANSWER.name())
+                    .addPropertyNode(CONTENT)
+                    .addConstraintViolation();
+            return Boolean.FALSE;
         }
-        if (Objects.nonNull(value.getSecondAnswer())) {
-            checkAnswers.add(Objects.requireNonNullElse(value.getSecondAnswer().getIsCorrect(), false));
-        }
-        if (Objects.nonNull(value.getThirdAnswer())) {
-            checkAnswers.add(Objects.requireNonNullElse(value.getThirdAnswer().getIsCorrect(), false));
-        }
-        if (Objects.nonNull(value.getFourthAnswer())) {
-            checkAnswers.add(Objects.requireNonNullElse(value.getFourthAnswer().getIsCorrect(), false));
-        }
-        if (!checkAnswers.isEmpty()) {
-            boolean isOnlyOneTrueAnswer = ValidateUtils.isOnlyOneTrue(checkAnswers);
-            if (!isOnlyOneTrueAnswer) {
-                context.buildConstraintViolationWithTemplate(ErrorMessage.QUESTION_CREATE_MUST_HAVE_ONE_TRUE_ANSWER.name())
-                        .addPropertyNode(CONTENT)
-                        .addConstraintViolation();
-                return Boolean.FALSE;
-            }
-        }
+
         log.info("Validate Only One Correct: end");
         return Boolean.TRUE;
     }
 
-    private boolean validateAnswer(CreateQuestionDTO.Answer value, ConstraintValidatorContext context, String answerName) {
+//    private boolean validateAnswer(CreateQuestionDTO.Answer value, ConstraintValidatorContext context, String answerName) {
+//        log.info(String.format("Validate %s of question: start", answerName));
+//        if (Objects.nonNull(value)) {
+//            if (StringUtils.isBlank(value.getAnswerContent())) {
+//                context.buildConstraintViolationWithTemplate(ErrorMessage.QUESTION_CREATE_ANSWER_CONTENT_REQUIRED.name())
+//                        .addPropertyNode(answerName)
+//                        .addConstraintViolation();
+//                return Boolean.FALSE;
+//            }
+//            if (Objects.isNull(value.getIsCorrect())) {
+//                value.setIsCorrect(Boolean.FALSE);
+//            }
+//        }
+//        log.info(String.format("Validate %s of question: end", answerName));
+//        return Boolean.TRUE;
+//    }
+    private boolean validateAnswerUpdate(UpdateQuestionDTO.AnswerUpdate value, ConstraintValidatorContext context, String answerName) {
         log.info(String.format("Validate %s of question: start", answerName));
         if (Objects.nonNull(value)) {
             if (StringUtils.isBlank(value.getAnswerContent())) {

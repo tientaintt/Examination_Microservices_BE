@@ -1,30 +1,23 @@
-package com.example.springboot.controller;
+package com.spring.boot.exam_service.controller;
 
-import com.example.springboot.dto.request.CreateQuestionDTO;
-import com.example.springboot.dto.request.UpdateQuestionDTO;
-import com.example.springboot.dto.request.UpdateQuestionGroupDTO;
-import com.example.springboot.service.QuestionService;
+import com.spring.boot.exam_service.dto.ApiResponse;
+import com.spring.boot.exam_service.dto.request.CreateQuestionDTO;
+import com.spring.boot.exam_service.dto.request.UpdateQuestionDTO;
+import com.spring.boot.exam_service.service.QuestionService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
+
 
 @Validated
 @RestController
-@RequestMapping("/api/v1/question")
+@RequestMapping("/question")
 @Slf4j
 @AllArgsConstructor
 public class QuestionController {
@@ -33,34 +26,42 @@ public class QuestionController {
     private static final String DEFAULT_COLUMN = "id";
     private static final String DEFAULT_SIZE = "12";
     private static final String DEFAULT_SORT_INCREASE = "asc";
-
     private QuestionService questionService;
-    @GetMapping(value = "/inactive/classroom/{classroomId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{questionId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> getAllInactiveQuestionOfClassroom(
-            @PathVariable(name = "classroomId") Long classroomId,
-            @RequestParam(defaultValue = DEFAULT_SEARCH) String search,
-            @RequestParam(defaultValue = DEFAULT_PAGE) int page,
-            @RequestParam(defaultValue = DEFAULT_COLUMN) String column,
-            @RequestParam(defaultValue = DEFAULT_SIZE) int size,
-            @RequestParam(defaultValue = DEFAULT_SORT_INCREASE) String sortType){
-        return questionService.getAllQuestionsOfClassroom(classroomId, search, page, column, size, sortType, false);
+    public ApiResponse<?> getQuestion(
+            @PathVariable(name = "questionId") Long questionId
+            ){
+        return questionService.getQuestionById(questionId);
     }
-    @GetMapping(value = "/classroom/{classroomId}", produces = MediaType.APPLICATION_JSON_VALUE)
+
+    @GetMapping(value = "/inactive/subject/{subjectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> getAllActiveQuestionOfClassroom(
-            @PathVariable(name = "classroomId") Long classroomId,
+    public ApiResponse<?> getAllInactiveQuestionOfClassroom(
+            @PathVariable(name = "subjectId") Long subjectId,
             @RequestParam(defaultValue = DEFAULT_SEARCH) String search,
             @RequestParam(defaultValue = DEFAULT_PAGE) int page,
             @RequestParam(defaultValue = DEFAULT_COLUMN) String column,
             @RequestParam(defaultValue = DEFAULT_SIZE) int size,
             @RequestParam(defaultValue = DEFAULT_SORT_INCREASE) String sortType){
-        return questionService.getAllQuestionsOfClassroom(classroomId, search, page, column, size, sortType, true);
+        return questionService.getAllQuestionsOfClassroom(subjectId, search, page, column, size, sortType, false);
+    }
+
+    @GetMapping(value = "/subject/{subjectId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    public ApiResponse<?> getAllActiveQuestionOfClassroom(
+            @PathVariable(name = "subjectId") Long subjectId,
+            @RequestParam(defaultValue = DEFAULT_SEARCH) String search,
+            @RequestParam(defaultValue = DEFAULT_PAGE) int page,
+            @RequestParam(defaultValue = DEFAULT_COLUMN) String column,
+            @RequestParam(defaultValue = DEFAULT_SIZE) int size,
+            @RequestParam(defaultValue = DEFAULT_SORT_INCREASE) String sortType){
+        return questionService.getAllQuestionsOfClassroom(subjectId, search, page, column, size, sortType, true);
     }
 
     @GetMapping(value = "/question-group/{questionGroupId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> getAllActiveQuestionOfQuestionGroup(
+    public ApiResponse<?> getAllActiveQuestionOfQuestionGroup(
             @PathVariable(name = "questionGroupId") Long questionGroupId,
             @RequestParam(defaultValue = DEFAULT_SEARCH) String search,
             @RequestParam(defaultValue = DEFAULT_PAGE) int page,
@@ -71,7 +72,7 @@ public class QuestionController {
     }
     @GetMapping(value = "/inactive/question-group/{questionGroupId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> getAllInactiveQuestionOfQuestionGroup(
+    public ApiResponse<?> getAllInactiveQuestionOfQuestionGroup(
             @PathVariable(name = "questionGroupId") Long questionGroupId,
             @RequestParam(defaultValue = DEFAULT_SEARCH) String search,
             @RequestParam(defaultValue = DEFAULT_PAGE) int page,
@@ -83,24 +84,24 @@ public class QuestionController {
 
     @PostMapping(value = "/create", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> createQuestion(@Valid @RequestBody CreateQuestionDTO DTO){
+    public ApiResponse<?> createQuestion(@Valid @RequestBody CreateQuestionDTO DTO){
         return questionService.createQuestion(DTO);
     }
     @PutMapping(value = "/update/{questionId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> updateQuestion(@PathVariable(name = "questionId") Long questionId,
+    public ApiResponse<?> updateQuestion(@PathVariable(name = "questionId") Long questionId,
                                                  @Valid @RequestBody UpdateQuestionDTO DTO){
         return questionService.updateQuestion(questionId, DTO);
     }
     @DeleteMapping(value = "/delete/{questionId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> deleteQuestion(@PathVariable(name = "questionId") Long questionId){
+    public ApiResponse<?> deleteQuestion(@PathVariable(name = "questionId") Long questionId){
         return questionService.switchQuestionStatus(questionId, false);
     }
 
     @PutMapping(value = "/active/{questionId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> activeClassroom(@PathVariable(name = "questionId") Long questionId){
+    public ApiResponse<?> activeClassroom(@PathVariable(name = "questionId") Long questionId){
         return questionService.switchQuestionStatus(questionId, true);
     }
 }

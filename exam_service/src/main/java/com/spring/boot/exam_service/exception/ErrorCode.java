@@ -29,8 +29,8 @@ public enum ErrorCode {
     VERIFY_INVALID_STATUS(1015,"User status is not enable to verify.",HttpStatus.BAD_REQUEST),
     FIREBASE_ERROR(1016,"Cannot access firebase database",HttpStatus.INTERNAL_SERVER_ERROR),
     FIREBASE_MESSAGING_ERROR(1017,"Cannot send message to firebase",HttpStatus.INTERNAL_SERVER_ERROR),
-    CLASSROOM_NOT_FOUND(1018,"Classroom not found",HttpStatus.NOT_FOUND),
-    CLASS_CODE_DUPLICATE_ERROR(1019, ErrorMessage.CLASS_CODE_DUPLICATE.getMessage(), HttpStatus.BAD_REQUEST),
+    SUBJECT_NOT_FOUND(1018,"Subject not found",HttpStatus.NOT_FOUND),
+    CLASS_CODE_DUPLICATE_ERROR(1019, ErrorMessage.SUBJECT_CODE_DUPLICATE.getMessage(), HttpStatus.BAD_REQUEST),
     MULTIPLE_CHOICE_NOT_FOUND_ERROR(1020,ErrorMessage.MULTIPLE_CHOICE_NOT_FOUND.getMessage(), HttpStatus.NOT_FOUND),
     MULTIPLE_CHOICE_TEST_UPDATE_STARTED_TEST_ERROR(1021,ErrorMessage.MULTIPLE_CHOICE_TEST_SUBMIT_NOT_STARTED_TEST.getMessage(),HttpStatus.BAD_REQUEST ),
     MULTIPLE_CHOICE_TEST_DATE_INVALID_ERROR(1022, ErrorMessage.MULTIPLE_CHOICE_TEST_DATE_INVALID.getMessage(), HttpStatus.BAD_REQUEST ),
@@ -43,7 +43,11 @@ public enum ErrorCode {
     SCORE_TEST_SUBMITTED_ERROR(1028,ErrorMessage.SCORE_TEST_SUBMITTED.getMessage(),HttpStatus.BAD_REQUEST),
     MULTIPLE_CHOICE_TEST_SUBMIT_NOT_STARTED_TEST_ERROR(1029,ErrorMessage. MULTIPLE_CHOICE_TEST_SUBMIT_NOT_STARTED_TEST.getMessage(),HttpStatus.BAD_REQUEST),
     STUDENT_NOT_FOUND_ERROR(1030,ErrorMessage.STUDENT_NOT_FOUND.getMessage(),HttpStatus.NOT_FOUND),
-
+    QUESTION_TYPE_NOT_FOUND_ERROR(1031,"Question type not found",HttpStatus.NOT_FOUND),
+    COMMON_FIELD_REQUIRED_ERROR(1034, "%s is required.",HttpStatus.BAD_REQUEST),
+    NO_STUDENT_IN_CLASS(1035,"There are no students in this class yet.",HttpStatus.NOT_FOUND),
+    CANNOT_READ_FILE(1036,"Cannot read file",HttpStatus.BAD_REQUEST),
+    CANNOT_WRITE_FILE(1037,"Cannot write file",HttpStatus.BAD_REQUEST),
     UNCATEGORIZED_EXCEPTION(9999,"Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR);
 
 

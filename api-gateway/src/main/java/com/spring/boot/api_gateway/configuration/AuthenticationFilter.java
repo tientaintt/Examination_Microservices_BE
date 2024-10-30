@@ -35,7 +35,17 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     ObjectMapper objectMapper;
 
     @NonFinal
-    private String[] publicEndpoint = {"/identity/auth/.*","/identity/users/registration"};
+    private String[] publicEndpoint = {"/identity/auth/.*",
+            "/identity/signup/student",
+            "/identity/signup/teacher",
+            "/identity/login",
+            "/identity/refresh_token",
+            "/identity/users/user/update",
+            "/identity/password/reset/.*",
+"/exam/subject",
+"/exam/subject/.*",
+            "/notify/password/.*",
+            "/identity/users"};
 
     @NonFinal
     @Value("${app.app-prefix}")
@@ -48,7 +58,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         log.info("AuthenticationFilter");
-
+        log.info(exchange.getRequest().getURI().getPath());
         if(isPublicEndpoint(exchange.getRequest())) {
             log.info("Public");
             return chain.filter(exchange);
@@ -56,6 +66,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         //get token from authorization header
         List<String> authHeader = exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION);
         if (CollectionUtils.isEmpty(authHeader)) {
+            log.info("Not authenticated");
             return unauthenticated(exchange.getResponse());
         }
         String authToken = authHeader.getFirst().replace("Bearer ", "");
@@ -64,13 +75,16 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         //delegate identity service
         //flapMap get result of method
         return identityService.introspect(authToken).flatMap(introspectResponseApiResponse -> {
-            if (introspectResponseApiResponse.getResult().isValid()) {
+            log.info("introspectResponseApiResponse: {}", introspectResponseApiResponse.getData());
+            if (introspectResponseApiResponse.getData().isValid()) {
                 return chain.filter(exchange);
             } else {
                 return unauthenticated(exchange.getResponse());
             }
-        }).onErrorResume(throwable ->
-                unauthenticated(exchange.getResponse())
+        }).onErrorResume(throwable ->{
+                log.error(throwable.getMessage());
+                return unauthenticated(exchange.getResponse());
+        }
         );
 
 

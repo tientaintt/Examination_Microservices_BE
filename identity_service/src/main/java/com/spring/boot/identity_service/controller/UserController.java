@@ -19,11 +19,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("")
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
@@ -38,25 +39,26 @@ public class UserController {
     UserService userService;
     private final UserRepository userRepository;
 
-    @GetMapping("/email/check")
+    @GetMapping("/user/email/check")
     APIResponse<?> checkEmail(@RequestParam String email) {
         return userService.checkEmailVerified(email);
     }
 
-    @PutMapping("/reverification")
+    @PutMapping("/user/reverification")
     APIResponse<?> updateVerifyCode(@RequestParam String userId, @RequestParam String verifyCode) {
         return userService.updateVerifyCode(userId, verifyCode);
     }
 
-    @PutMapping("/updatepasswordverifycode")
+    @PutMapping("/user/updatepasswordverifycode")
     APIResponse<?> updatePasswordCode(@RequestParam String userId, @RequestParam String verifyCode) {
-        return userService.updateVerifyCode(userId, verifyCode);
+        log.info("Update password verify code for user {}", userId);
+        return userService.updateResetPassCode(userId, verifyCode);
     }
 
-    @PostMapping(value = "/email/verify", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/user/email/verify", produces = MediaType.APPLICATION_JSON_VALUE)
     public APIResponse<?> verifyEmail(@Valid @RequestBody VerificationEmailRequest verificationEmailDTO){
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        log.info("AAAAAAAAAAA");
+
         User userProfile = userRepository.findOneByUsername(auth.getName()).orElseThrow(
                 () -> new AppException(ErrorCode.USER_NOT_EXISTED)
         );
@@ -65,18 +67,18 @@ public class UserController {
 
 
 
-    @PostMapping(value = "/password/reset/EMAIL:{email-address}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public APIResponse<?> resetPassword(@Valid @RequestBody ResetPasswordRequest resetPasswordDTO,
-                                           @PathVariable(value = "email-address") String emailAddress){
-        return userService.resetPassword(emailAddress,resetPasswordDTO);
-    }
-    @PutMapping(value = "/change-password", produces = MediaType.APPLICATION_JSON_VALUE)
+
+    @PutMapping(value = "/user/change-password", produces = MediaType.APPLICATION_JSON_VALUE)
     public APIResponse<?> changePassword(@Valid @RequestBody ChangePasswordRequest changePassword){
         return userService.changePassword(changePassword);
     }
     @PutMapping(value = "/user/update", produces = MediaType.APPLICATION_JSON_VALUE)
     public APIResponse<?> updateUserprofile(@Valid @RequestBody UpdateUserRequest DTO){
         return userService.updateUserProfile(DTO);
+    }
+    @PutMapping(value = "/user/update/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public APIResponse<?> updateUserProfileImage(@RequestPart MultipartFile file){
+        return  userService.updateImage(file);
     }
 //    UserService userService;
 //    @GetMapping
@@ -93,21 +95,24 @@ public class UserController {
 //                .build();
 //    }
 //
-    @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    APIResponse<?> getAllUsersByUserIds(@RequestParam(required = false) List<String> userIds,
+    @PostMapping(value = "/users", produces = MediaType.APPLICATION_JSON_VALUE)
+    APIResponse<?> getAllUsersByUserIds(@RequestBody UserIdsRequest userIdsRequest,
                                         @RequestParam(defaultValue = DEFAULT_PAGE) int page,
                                         @RequestParam(defaultValue = DEFAULT_COLUMN) String column,
                                         @RequestParam(defaultValue = DEFAULT_SIZE) int size,
-                                        @RequestParam(defaultValue = DEFAULT_SORT_INCREASE) String sortType){
-        return userService.getAllUserByListId(userIds,page,column,size,sortType);
+                                        @RequestParam(defaultValue = DEFAULT_SORT_INCREASE) String sortType,
+                                        @RequestParam(defaultValue = DEFAULT_SEARCH) String search){
+        log.info(userIdsRequest.getUserIds().toString());
+        return userService.getAllUserByListId(userIdsRequest.getUserIds(),page,column,size,sortType,search);
     }
-    @GetMapping("/my-info")
+
+    @GetMapping("/user/my-info")
     APIResponse<?> getMyInfo() {
         return userService.getCurrentLoggedInUser();
     }
 
-    @GetMapping("")
-    APIResponse<?> getUserByEmailVerifiedAndStatus(@RequestParam String userId, @RequestParam boolean status){
+    @GetMapping("/user/userIdAndStatus")
+    APIResponse<?> getUserByUserIdAndStatus(@RequestParam String userId, @RequestParam boolean status){
         return studentService.getVerifiedStudentByIdAndStatus(userId,status);
     }
 //

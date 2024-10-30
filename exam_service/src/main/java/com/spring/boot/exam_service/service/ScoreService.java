@@ -10,8 +10,8 @@ public interface ScoreService {
 
    ApiResponse<?> getAllStudentScoreOfTest(Long testId, String search, int page, String column, int size, String sortType);
 
-   ApiResponse<?> getScoreOfStudent(Long studentId,Long multipleChoiceTestId);
+   ApiResponse<?> getScoreOfStudent(String studentId,Long multipleChoiceTestId);
 
 
-   ApiResponse<?> getAllScoreOfStudent( Long userID,String search, Long dateFrom, Long dateTo, int page, String column, int size, String sortType);
+   ApiResponse<?> getAllScoreOfStudent( String userID,String search, Long dateFrom, Long dateTo, int page, String column, int size, String sortType);
 }

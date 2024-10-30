@@ -65,11 +65,11 @@ public class CustomBuilder {
                 .build();
     }
 
-    public static ClassroomResponse buildClassroomResponse(Classroom classRoom){
-        return ClassroomResponse.builder()
+    public static SubjectResponse buildSubjectResponse(Subject classRoom){
+        return SubjectResponse.builder()
                 .id(classRoom.getId())
-                .className(classRoom.getClassName())
-                .classCode(classRoom.getClassCode())
+                .subjectName(classRoom.getSubjectName())
+                .subjectCode(classRoom.getSubjectCode())
                 .description(classRoom.getDescription())
                 .isPrivate(classRoom.getIsPrivate())
                 .isEnable(classRoom.getIsEnable())
@@ -88,14 +88,12 @@ public class CustomBuilder {
                 .build();
     }
 
-    public static QuestionResponse buildQuestionResponse(Question question){
+    public static QuestionResponse buildQuestionResponse(Question question, List<AnswerResponse> answers){
         return QuestionResponse.builder()
                 .id(question.getId())
                 .content(question.getContent())
-                .firstAnswer(question.getFirstAnswer())
-                .secondAnswer(question.getSecondAnswer())
-                .thirdAnswer(question.getThirdAnswer())
-                .fourthAnswer(question.getFourthAnswer())
+                .questionType(question.getQuestionType().getTypeQuestion())
+                .answers(answers)
                 .build();
     }
     /**
@@ -105,8 +103,8 @@ public class CustomBuilder {
      */
     public static ResponseEntity<LinkedHashMap<String, String>> buildClassroomNotFoundResponseEntity() {
         LinkedHashMap<String, String> response = new LinkedHashMap<>();
-        response.put(Constants.ERROR_CODE_KEY, ErrorMessage.CLASSROOM_NOT_FOUND.getErrorCode());
-        response.put(Constants.MESSAGE_KEY, ErrorMessage.CLASSROOM_NOT_FOUND.getMessage());
+        response.put(Constants.ERROR_CODE_KEY, ErrorMessage.SUBJECT_NOT_FOUND.getErrorCode());
+        response.put(Constants.MESSAGE_KEY, ErrorMessage.SUBJECT_NOT_FOUND.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(response);

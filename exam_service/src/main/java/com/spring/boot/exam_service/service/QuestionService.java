@@ -20,5 +20,7 @@ public interface QuestionService {
 
     ApiResponse<?> getAllQuestionOfQuestionGroup(Long questionGroupId,String search, int page, String column, int size, String sortType, boolean isActiveQuestion);
 
-    ApiResponse<?> getAllQuestionsOfClassroom(Long classroomId, String search, int page, String column, int size, String sortType, boolean isActiveQuestion);
+    ApiResponse<?> getAllQuestionsOfClassroom(Long subjectId, String search, int page, String column, int size, String sortType, boolean isActiveQuestion);
+
+    ApiResponse<?> getQuestionById(Long questionId);
 }

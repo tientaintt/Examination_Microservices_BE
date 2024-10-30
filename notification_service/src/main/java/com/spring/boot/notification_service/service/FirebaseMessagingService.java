@@ -23,29 +23,29 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 public class FirebaseMessagingService {
 
-    FirebaseMessaging firebaseMessaging;
-    public APIResponse<?> sendNotification(NotificationFirebaseRequest notificationFirebaseRequest) {
-        log.info("Sending notification to Firebase");
-        Notification notification =  Notification.builder()
-                .setTitle(notificationFirebaseRequest.getTitle())
-                .setBody(notificationFirebaseRequest.getBody())
-                .setImage(notificationFirebaseRequest.getImage())
-                .build();
-        Message message=Message.builder()
-                .setTopic("news")
-                
-                .setNotification(notification)
-                .putAllData(notificationFirebaseRequest.getData())
-                .build();
-        try {
-            String resString=firebaseMessaging.sendAsync(message).get();
-            log.info("Successfully sent notification to Firebase", resString);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
-        }
-
-        return APIResponse.builder().build();
-    }
+//    FirebaseMessaging firebaseMessaging;
+//    public APIResponse<?> sendNotification(NotificationFirebaseRequest notificationFirebaseRequest) {
+//        log.info("Sending notification to Firebase");
+//        Notification notification =  Notification.builder()
+//                .setTitle(notificationFirebaseRequest.getTitle())
+//                .setBody(notificationFirebaseRequest.getBody())
+//                .setImage(notificationFirebaseRequest.getImage())
+//                .build();
+//        Message message=Message.builder()
+//                .setTopic("news")
+//
+//                .setNotification(notification)
+//                .putAllData(notificationFirebaseRequest.getData())
+//                .build();
+//        try {
+//            String resString=firebaseMessaging.sendAsync(message).get();
+//            log.info("Successfully sent notification to Firebase", resString);
+//        } catch (InterruptedException e) {
+//            throw new RuntimeException(e);
+//        } catch (ExecutionException e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//        return APIResponse.builder().build();
+//    }
 }

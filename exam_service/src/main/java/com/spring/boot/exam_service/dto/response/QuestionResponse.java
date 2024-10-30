@@ -4,14 +4,15 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Setter
 @Getter
 @Builder
 public class QuestionResponse {
     private Long id;
     private String content;
-    private String firstAnswer;
-    private String secondAnswer;
-    private String thirdAnswer;
-    private String fourthAnswer;
+    private List<AnswerResponse> answers;
+    private String questionType;
+
 }

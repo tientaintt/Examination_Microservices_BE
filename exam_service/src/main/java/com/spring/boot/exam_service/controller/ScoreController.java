@@ -1,37 +1,30 @@
-package com.example.springboot.controller;
+package com.spring.boot.exam_service.controller;
 
-import com.example.springboot.dto.request.CreateQuestionDTO;
-import com.example.springboot.dto.request.GetScoreOfStudentDTO;
-import com.example.springboot.dto.request.SubmitMCTestDTO;
-import com.example.springboot.entity.UserProfile;
-import com.example.springboot.service.ScoreService;
-import com.example.springboot.util.WebUtils;
+
+import com.spring.boot.exam_service.dto.ApiResponse;
+import com.spring.boot.exam_service.dto.request.GetScoreOfStudentDTO;
+import com.spring.boot.exam_service.dto.request.SubmitMCTestDTO;
+import com.spring.boot.exam_service.dto.request.UserRequest;
+import com.spring.boot.exam_service.service.IdentityService;
+import com.spring.boot.exam_service.service.ScoreService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+
 import java.sql.Timestamp;
 import java.time.Period;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
 @Validated
 @RestController
-@RequestMapping("/api/v1/score")
+@RequestMapping("/score")
 @Slf4j
 @AllArgsConstructor
 public class ScoreController {
@@ -41,15 +34,15 @@ public class ScoreController {
     private static final String DEFAULT_SIZE = "12";
     private static final String DEFAULT_SORT_INCREASE = "asc";
     private final ScoreService scoreService;
-    private final WebUtils webUtils;
+    private final IdentityService identityService;
     @PostMapping(value = "/submit-test", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<?> submitTest(@Valid @RequestBody SubmitMCTestDTO DTO){
+    public ApiResponse<?> submitTest(@Valid @RequestBody SubmitMCTestDTO DTO){
         return scoreService.submitTest(DTO);
     }
     @GetMapping(value = "/multiple-choice-test/{testId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> getAllStudentScoreOfTest(
+    public ApiResponse<?> getAllStudentScoreOfTest(
             @PathVariable(name = "testId") Long testId,
             @RequestParam(defaultValue = DEFAULT_SEARCH) String search,
             @RequestParam(defaultValue = DEFAULT_PAGE) int page,
@@ -61,18 +54,18 @@ public class ScoreController {
 
     @PostMapping(value = "/student", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> getScoreOfStudent(@Valid @RequestBody GetScoreOfStudentDTO dto){
+    public ApiResponse<?> getScoreOfStudent(@Valid @RequestBody GetScoreOfStudentDTO dto){
         return scoreService.getScoreOfStudent(dto.getStudentId(), dto.getMultipleChoiceTestId());
     }
     @GetMapping(value = "/my/{testId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<?> getMyScoreOfTest(@PathVariable Long testId){
-        UserProfile userProfile = webUtils.getCurrentLogedInUser();
-        return scoreService.getScoreOfStudent(userProfile.getUserID(), testId);
+    public ApiResponse<?> getMyScoreOfTest(@PathVariable Long testId){
+        UserRequest userProfile = identityService.getCurrentUser();
+        return scoreService.getScoreOfStudent(userProfile.getId(), testId);
     }
     @GetMapping(value = "/my", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<?> getMyAllScores(
+    public ApiResponse<?> getMyAllScores(
             @RequestParam(defaultValue = DEFAULT_SEARCH) String search,
             @RequestParam(required = false) Long dateFrom,
             @RequestParam(required = false) Long dateTo,
@@ -91,7 +84,7 @@ public class ScoreController {
         if(Objects.isNull(dateTo)){
             dateTo = dateToDefault;
         }
-        UserProfile userProfile = webUtils.getCurrentLogedInUser();
-        return scoreService.getAllScoreOfStudent(userProfile.getUserID(),search, dateFrom, dateTo, page, column, size, sortType);
+        UserRequest userProfile = identityService.getCurrentUser();
+        return scoreService.getAllScoreOfStudent(userProfile.getId(),search, dateFrom, dateTo, page, column, size, sortType);
     }
 }

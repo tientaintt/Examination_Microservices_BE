@@ -30,8 +30,8 @@ public class SubmittedQuestion {
     @Column(name = ID, nullable = false)
     private Long id;
 
-    @Column(name = QUESTION_ID)
-    private Long questionId;
+//    @Column(name = QUESTION_ID)
+//    private Long questionId;
 
 //    @Column(name = CONTENT)
 //    private String content;
@@ -51,8 +51,8 @@ public class SubmittedQuestion {
 //    @Column(name = CORRECT_ANSWER)
 //    private String correctAnswer;
 //
-//    @Column(name = SUBMITTED_ANSWER)
-//    private String submittedAnswer;
+    @Column(name = SUBMITTED_ANSWER)
+    private String submittedAnswer;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private Score score;

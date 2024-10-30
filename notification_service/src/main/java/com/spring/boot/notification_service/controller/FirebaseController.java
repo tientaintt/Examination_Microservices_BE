@@ -16,12 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 public class FirebaseController {
-    private static final Logger log = LoggerFactory.getLogger(FirebaseController.class);
-    FirebaseMessagingService  firebaseMessagingService;
-
-    @PostMapping("/firebase/send_message")
-    public APIResponse<?> sendMessage(@RequestBody NotificationFirebaseRequest  notificationFirebaseRequest) {
-
-        return firebaseMessagingService.sendNotification(notificationFirebaseRequest);
-    }
+//    private static final Logger log = LoggerFactory.getLogger(FirebaseController.class);
+//    FirebaseMessagingService  firebaseMessagingService;
+//
+//    @PostMapping("/firebase/send_message")
+//    public APIResponse<?> sendMessage(@RequestBody NotificationFirebaseRequest  notificationFirebaseRequest) {
+//
+//        return firebaseMessagingService.sendNotification(notificationFirebaseRequest);
+//    }
 }

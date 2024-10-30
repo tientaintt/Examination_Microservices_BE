@@ -1,31 +1,31 @@
-package com.example.springboot.controller;
+package com.spring.boot.exam_service.controller;
 
-import com.example.springboot.dto.request.CreateClassroomDTO;
-import com.example.springboot.dto.request.CreateQuestionGroupDTO;
-import com.example.springboot.dto.request.UpdateClassroomDTO;
-import com.example.springboot.dto.request.UpdateQuestionGroupDTO;
-import com.example.springboot.service.QuestionGroupService;
+
+import com.spring.boot.exam_service.dto.ApiResponse;
+import com.spring.boot.exam_service.dto.request.CreateQuestionGroupDTO;
+import com.spring.boot.exam_service.dto.request.UpdateQuestionGroupDTO;
+import com.spring.boot.exam_service.service.QuestionGroupService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.Valid;
+import java.io.FileInputStream;
+import java.io.IOException;
+
 
 @Validated
 @RestController
-@RequestMapping("/api/v1/question-group")
+@RequestMapping("/question-group")
 @Slf4j
 @AllArgsConstructor
 public class QuestionGroupController {
@@ -38,52 +38,66 @@ public class QuestionGroupController {
 
     private final QuestionGroupService questionGroupService;
 
-    @GetMapping(value = "/classroom/{classroomId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/subject/{subjectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> getAllActiveQuestionGroupOfClassroom(
-            @PathVariable(name = "classroomId") Long classroomId,
+    public ApiResponse<?> getAllActiveQuestionGroupOfClassroom(
+            @PathVariable(name = "subjectId") Long subjectId,
             @RequestParam(defaultValue = DEFAULT_SEARCH) String search,
             @RequestParam(defaultValue = DEFAULT_PAGE) int page,
             @RequestParam(defaultValue = DEFAULT_COLUMN) String column,
             @RequestParam(defaultValue = DEFAULT_SIZE) int size,
             @RequestParam(defaultValue = DEFAULT_SORT_INCREASE) String sortType){
-        return questionGroupService.getAllQuestionGroupOfClassroom(classroomId, search, page, column, size, sortType, true);
+        return questionGroupService.getAllQuestionGroupOfClassroom(subjectId, search, page, column, size, sortType, true);
     }
 
-    @GetMapping(value = "/inactive/classroom/{classroomId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/inactive/subject/{subjectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> getAllInactiveQuestionGroupOfClassroom(
-            @PathVariable(name = "classroomId") Long classroomId,
+    public ApiResponse<?> getAllInactiveQuestionGroupOfClassroom(
+            @PathVariable(name = "subjectId") Long subjectId,
             @RequestParam(defaultValue = DEFAULT_SEARCH) String search,
             @RequestParam(defaultValue = DEFAULT_PAGE) int page,
             @RequestParam(defaultValue = DEFAULT_COLUMN) String column,
             @RequestParam(defaultValue = DEFAULT_SIZE) int size,
             @RequestParam(defaultValue = DEFAULT_SORT_INCREASE) String sortType){
-        return questionGroupService.getAllQuestionGroupOfClassroom(classroomId, search, page, column, size, sortType, false);
+        return questionGroupService.getAllQuestionGroupOfClassroom(subjectId, search, page, column, size, sortType, false);
     }
 
     @PostMapping(value = "/create", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> createQuestionGroup(@Valid @RequestBody CreateQuestionGroupDTO DTO){
+    public ApiResponse<?> createQuestionGroup(@Valid @RequestBody CreateQuestionGroupDTO DTO){
         return questionGroupService.createQuestionGroup(DTO);
     }
 
     @DeleteMapping(value = "/delete/{questionGroupId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> deleteQuestionGroup(@PathVariable(name = "questionGroupId") Long questionGroupId){
+    public ApiResponse<?> deleteQuestionGroup(@PathVariable(name = "questionGroupId") Long questionGroupId){
         return questionGroupService.switchQuestionGroupStatus(questionGroupId, false);
     }
 
     @PutMapping(value = "/active/{questionGroupId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ResponseEntity<?> activeQuestionGroup(@PathVariable(name = "questionGroupId") Long questionGroupId){
+    public ApiResponse<?> activeQuestionGroup(@PathVariable(name = "questionGroupId") Long questionGroupId){
         return questionGroupService.switchQuestionGroupStatus(questionGroupId, true);
     }
 
     @PutMapping(value = "/update/{questionGroupId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> updateQuestionGroup(@PathVariable(name = "questionGroupId") Long questionGroupId,
+    public ApiResponse<?> updateQuestionGroup(@PathVariable(name = "questionGroupId") Long questionGroupId,
                                                  @Valid @RequestBody UpdateQuestionGroupDTO DTO){
         return questionGroupService.updateQuestionGroup(questionGroupId, DTO);
     }
+
+    @GetMapping(value ="export/questions/{questionGroupId}")
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    public ResponseEntity<InputStreamResource> exportListQuestionOfQuestionGroup(@PathVariable(name = "questionGroupId") Long questionGroupId)
+    {
+        return questionGroupService.exportQuestionOfQuestionGroup(questionGroupId);
+    }
+
+    @PostMapping(value = "/import/questions/{questionGroupId}",produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    public ApiResponse<?> importQuestionsIntoQuestionGroup(@RequestPart MultipartFile file, @PathVariable(name = "questionGroupId") Long questionGroupId) {
+        return questionGroupService.importQuestionsIntoQuestionGroup(file,questionGroupId);
+    }
+
 }

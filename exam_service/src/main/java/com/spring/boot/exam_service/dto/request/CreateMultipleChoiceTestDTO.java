@@ -23,7 +23,7 @@ public class CreateMultipleChoiceTestDTO {
 
     private String description;
 
-    private Long classroomId;
+    private Long subjectId;
 
     private Double targetScore;
 

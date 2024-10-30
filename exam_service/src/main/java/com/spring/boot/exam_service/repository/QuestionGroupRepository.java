@@ -19,8 +19,8 @@ public interface QuestionGroupRepository extends JpaRepository<QuestionGroup, Lo
     Optional<QuestionGroup> findByCode(String code);
 
     @Query(value = "select * FROM question_group where " +
-            "class_room_id = :classroomId " +
+            "subject_id = :subjectId " +
             "and is_enable = :isEnable " +
             "and (question_group.name like :searchText or question_group.code like :searchText)", nativeQuery = true)
-    Page<QuestionGroup> findQuestionGroupsOfClassroomByClassroomId(Long classroomId, String searchText, Boolean isEnable, Pageable pageable);
+    Page<QuestionGroup> findQuestionGroupsOfClassroomByClassroomId(Long subjectId, String searchText, Boolean isEnable, Pageable pageable);
 }

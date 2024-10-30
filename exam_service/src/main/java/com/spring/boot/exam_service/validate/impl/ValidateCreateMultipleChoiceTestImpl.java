@@ -3,7 +3,7 @@ package com.spring.boot.exam_service.validate.impl;
 
 import com.spring.boot.exam_service.constants.ErrorMessage;
 import com.spring.boot.exam_service.dto.request.CreateMultipleChoiceTestDTO;
-import com.spring.boot.exam_service.repository.ClassroomRepository;
+import com.spring.boot.exam_service.repository.SubjectRepository;
 import com.spring.boot.exam_service.repository.QuestionGroupRepository;
 import com.spring.boot.exam_service.validate.ValidateCreateMultipleChoiceTest;
 import com.spring.boot.exam_service.validate.ValidateUtils;
@@ -27,13 +27,13 @@ public class ValidateCreateMultipleChoiceTestImpl implements ConstraintValidator
     private static final String START_DATE = "startDate";
     private static final String END_DATE = "endDate";
     private static final String TESTING_TIME = "testingTime";
-    private static final String CLASSROOM_ID = "classroomId";
+    private static final String CLASSROOM_ID = "subjectId";
     private static final String TARGET_SCORE = "targetScore";
     private static final String QUESTION_IDS = "questionIds";
     private static final String RANDOM_QUESTIONS = "randomQuestions";
     private static final Long unixTimeNow = Timestamp.from(ZonedDateTime.now().toInstant()).getTime();
 
-    private final ClassroomRepository classroomRepository;
+    private final SubjectRepository subjectRepository;
     private final QuestionGroupRepository questionGroupRepository;
 
 
@@ -154,20 +154,20 @@ public class ValidateCreateMultipleChoiceTestImpl implements ConstraintValidator
     }
 
     private boolean validateClassroomId(CreateMultipleChoiceTestDTO value, ConstraintValidatorContext context) {
-        log.info("Create multiple choice test: Validate classroomId: Start");
-        if(Objects.isNull(value.getClassroomId())) {
+        log.info("Create multiple choice test: Validate subjectId: Start");
+        if(Objects.isNull(value.getSubjectId())) {
             context.buildConstraintViolationWithTemplate(ErrorMessage.COMMON_FIELD_REQUIRED.name())
                     .addPropertyNode(CLASSROOM_ID)
                     .addConstraintViolation();
             return Boolean.FALSE;
         }
-        if(classroomRepository.findById(value.getClassroomId()).isEmpty()) {
-            context.buildConstraintViolationWithTemplate(ErrorMessage.CLASSROOM_NOT_FOUND.name())
+        if(subjectRepository.findById(value.getSubjectId()).isEmpty()) {
+            context.buildConstraintViolationWithTemplate(ErrorMessage.SUBJECT_NOT_FOUND.name())
                     .addPropertyNode(CLASSROOM_ID)
                     .addConstraintViolation();
             return Boolean.FALSE;
         }
-        log.info("Create multiple choice test: Validate classroomId: End");
+        log.info("Create multiple choice test: Validate subjectId: End");
         return Boolean.TRUE;
     }
 

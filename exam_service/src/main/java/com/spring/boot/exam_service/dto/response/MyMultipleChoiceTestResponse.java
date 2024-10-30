@@ -17,13 +17,13 @@ public class MyMultipleChoiceTestResponse {
     private String testName;
     private String testDescription;
     private Long testingTime;
-    private Long classroomId;
-    private String className;
-    private String classCode;
-    private String classDescription;
+    private Long subjectId;
+    private String subjectName;
+    private String subjectCode;
+    private String subjectDescription;
     private Boolean isSubmitted;
 
-    public MyMultipleChoiceTestResponse(Long id, String createdBy, Long startDate, Long endDate, String testName, String testDescription, Long testingTime, Long classroomId, String className, String classCode, String classDescription, Boolean isSubmitted) {
+    public MyMultipleChoiceTestResponse(Long id, String createdBy, Long startDate, Long endDate, String testName, String testDescription, Long testingTime, Long subjectId, String subjectName, String subjectCode, String subjectDescription, Boolean isSubmitted) {
         this.id = id;
         this.createdBy = createdBy;
         this.startDate = startDate;
@@ -31,10 +31,10 @@ public class MyMultipleChoiceTestResponse {
         this.testName = testName;
         this.testDescription = testDescription;
         this.testingTime = testingTime;
-        this.classroomId = classroomId;
-        this.className = className;
-        this.classCode = classCode;
-        this.classDescription = classDescription;
+        this.subjectId = subjectId;
+        this.subjectName = subjectName;
+        this.subjectCode = subjectCode;
+        this.subjectDescription = subjectDescription;
         this.isSubmitted = isSubmitted;
     }
 }

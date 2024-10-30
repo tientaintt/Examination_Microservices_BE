@@ -1,10 +1,7 @@
 package com.spring.boot.identity_service.controller;
 
 import com.nimbusds.jose.JOSEException;
-import com.spring.boot.identity_service.dto.request.AuthenticationRequest;
-import com.spring.boot.identity_service.dto.request.IntrospectRequest;
-import com.spring.boot.identity_service.dto.request.RefreshTokenRequest;
-import com.spring.boot.identity_service.dto.request.UserCreationRequest;
+import com.spring.boot.identity_service.dto.request.*;
 import com.spring.boot.identity_service.dto.response.APIResponse;
 import com.spring.boot.identity_service.dto.response.IntrospectResponse;
 import com.spring.boot.identity_service.dto.response.JwtResponse;
@@ -36,7 +33,12 @@ import java.text.ParseException;
 public class AuthController {
     UserService userService;
     AuthenticationService authenticationService;
-    @PostMapping("/introspect")
+    @PostMapping(value = "/password/reset/EMAIL:{email-address}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public APIResponse<?> resetPassword(@Valid @RequestBody ResetPasswordRequest resetPasswordDTO,
+                                        @PathVariable(value = "email-address") String emailAddress){
+        return userService.resetPassword(emailAddress,resetPasswordDTO);
+    }
+    @PostMapping("/auth/introspect")
     APIResponse<IntrospectResponse> authenticate(@RequestBody IntrospectRequest request)
             throws ParseException, JOSEException {
         var result = authenticationService.introspect(request);
@@ -63,7 +65,7 @@ public class AuthController {
     }
 
     @PostMapping(value = "/refresh_token", produces = MediaType.APPLICATION_JSON_VALUE)
-    public APIResponse<?> refreshToken(@Valid @RequestBody RefreshTokenRequest refreshTokenDTO){
+    public APIResponse<?> refreshToken(@Valid @RequestBody RefreshRequest refreshTokenDTO){
 
         return userService.refreshToken(refreshTokenDTO);
     }

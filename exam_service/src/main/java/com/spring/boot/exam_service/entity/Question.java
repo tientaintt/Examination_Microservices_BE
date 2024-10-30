@@ -18,10 +18,7 @@ public class Question extends AbstractAuditingEntity {
     private static final long serialVersionUID = 1L;
     private static final String ID = "id";
     private static final String CONTENT = "content";
-    private static final String FIRST_ANSWER = "first_answer";
-    private static final String SECOND_ANSWER = "second_answer";
-    private static final String THIRD_ANSWER = "third_answer";
-    private static final String FOURTH_ANSWER = "fourth_answer";
+
     private static final String CORRECT_ANSWER = "correct_answer";
 
     @Id
@@ -32,20 +29,20 @@ public class Question extends AbstractAuditingEntity {
     @Column(name = CONTENT)
     private String content;
 
-    @Column(name = FIRST_ANSWER)
-    private String firstAnswer;
-
-    @Column(name = SECOND_ANSWER)
-    private String secondAnswer;
-
-    @Column(name = THIRD_ANSWER)
-    private String thirdAnswer;
-
-    @Column(name = FOURTH_ANSWER)
-    private String fourthAnswer;
-
-    @Column(name = CORRECT_ANSWER)
-    private String correctAnswer;
+//    @Column(name = FIRST_ANSWER)
+//    private String firstAnswer;
+//
+//    @Column(name = SECOND_ANSWER)
+//    private String secondAnswer;
+//
+//    @Column(name = THIRD_ANSWER)
+//    private String thirdAnswer;
+//
+//    @Column(name = FOURTH_ANSWER)
+//    private String fourthAnswer;
+//
+//    @Column(name = CORRECT_ANSWER)
+//    private String correctAnswer;
 
     @ManyToOne(fetch = FetchType.LAZY)
     private QuestionGroup questionGroup;

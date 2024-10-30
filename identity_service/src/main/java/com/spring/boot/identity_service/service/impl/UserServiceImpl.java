@@ -19,8 +19,10 @@ import com.spring.boot.identity_service.repository.RoleRepository;
 import com.spring.boot.identity_service.repository.StudentRepositoryRead;
 import com.spring.boot.identity_service.repository.UserRepository;
 import com.spring.boot.identity_service.service.AuthenticationService;
+import com.spring.boot.identity_service.service.FileService;
 import com.spring.boot.identity_service.service.RefreshTokenService;
 import com.spring.boot.identity_service.service.UserService;
+import com.spring.boot.identity_service.util.EnumParentFileType;
 import com.spring.boot.identity_service.util.PageUtils;
 import com.spring.boot.identity_service.util.WebUtils;
 import lombok.AccessLevel;
@@ -33,10 +35,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.*;
@@ -49,8 +53,8 @@ import java.util.*;
 public class UserServiceImpl implements UserService {
 //    @Value("${send-by-mail.verification-code-time}")
 
-    private  Long verificationCodeTime= 30L;
-    private Long resetPasswordCodeTime=15L;
+    private Long verificationCodeTime = 30L;
+    private Long resetPasswordCodeTime = 15L;
     UserRepository userRepository;
     AuthenticationService authenticationService;
     RefreshTokenService refreshTokenService;
@@ -59,6 +63,7 @@ public class UserServiceImpl implements UserService {
     UserMapper userMapper;
     WebUtils webUtils;
     StudentRepositoryRead studentRepositoryRead;
+    FileService fileService;
 
     @Override
     @Transactional
@@ -117,7 +122,8 @@ public class UserServiceImpl implements UserService {
         log.info("Start login");
 
         // Delete the old refresh before add the new refresh
-        Optional<User> userProfile = userRepository.findOneByUsername(authenticationRequest.getUsername());
+        Optional<User> userProfile = userRepository.findOneByUsernameOrEmailAddressAndIsEmailAddressVerified(authenticationRequest.getLoginName(), authenticationRequest.getLoginName(), true);
+
         if (userProfile.isEmpty() || !passwordEncoder.matches(authenticationRequest.getPassword(), userProfile.get().getPassword())) {
             throw new BadCredentialsException("Wrong login or password.");
         }
@@ -128,13 +134,13 @@ public class UserServiceImpl implements UserService {
 
         // get authentication information
         // set login name to loginVm to start create authenticate
-        authenticationRequest.setUsername(userProfile.get().getUsername());
+        authenticationRequest.setLoginName(userProfile.get().getUsername());
         AuthenticationResponse tokenDetails = authenticationService.authenticate(authenticationRequest);
         log.info("End login");
         return APIResponse.<JwtResponse>builder().data(new JwtResponse(
                         userProfile.get().getId(),
                         tokenDetails.getDisplayName(),
-                        authenticationRequest.getUsername(),
+                        authenticationRequest.getLoginName(),
                         tokenDetails.getEmailAddress(),
                         true,
                         tokenDetails.getAccessToken(),
@@ -149,45 +155,46 @@ public class UserServiceImpl implements UserService {
     /*
      * NOTE CHECK AGAIN*/
     @Override
-    public APIResponse<?> refreshToken(RefreshTokenRequest refreshTokenDTO) {
+    public APIResponse<?> refreshToken(RefreshRequest refreshTokenDTO) {
         log.info("Start refresh token");
-        String requestRefreshToken = refreshTokenDTO.getRefreshToken();
-
-
-        Optional<RefreshToken> refreshToken = refreshTokenService.findByRefreshToken(requestRefreshToken);
-        return refreshTokenService.findByRefreshToken(requestRefreshToken)
-                .map(refreshTokenService::verifyExpiration)
-                .map(RefreshToken::getUser)
-                .map(userProfile -> {
-                    AuthenticationResponse tokenDetails = authenticationService.authenticate(
-                            new AuthenticationRequest(userProfile.getUsername(), userProfile.getPassword())
-                    );
-                    log.info("End refresh token");
-                    return APIResponse.<JwtResponse>builder().data(new JwtResponse(
-                                    userProfile.getId(),
-                                    tokenDetails.getDisplayName(),
-                                    userProfile.getUsername(),
-                                    tokenDetails.getEmailAddress(),
-                                    true,
-                                    tokenDetails.getAccessToken(),
-                                    requestRefreshToken,
-                                    tokenDetails.getRoles(),
-                                    tokenDetails.getExpiryTime()))
-                            .build()
-                            ;
-                })
-                .orElseThrow(() -> new RefreshTokenNotFoundException(requestRefreshToken,
-                        "Refresh token is not in database!"));
+        return APIResponse.builder().data(authenticationService.refreshToken(refreshTokenDTO)).build();
+//        String requestRefreshToken = refreshTokenDTO.getRefreshToken();
+//
+//
+//        Optional<RefreshToken> refreshToken = refreshTokenService.findByRefreshToken(requestRefreshToken);
+//        return refreshTokenService.findByRefreshToken(requestRefreshToken)
+//                .map(refreshTokenService::verifyExpiration)
+//                .map(RefreshToken::getUser)
+//                .map(userProfile -> {
+//                    AuthenticationResponse tokenDetails = authenticationService.authenticate(
+//                            new AuthenticationRequest(userProfile.getUsername(), userProfile.getPassword())
+//                    );
+//                    log.info("End refresh token");
+//                    return APIResponse.<JwtResponse>builder().data(new JwtResponse(
+//                                    userProfile.getId(),
+//                                    tokenDetails.getDisplayName(),
+//                                    userProfile.getUsername(),
+//                                    tokenDetails.getEmailAddress(),
+//                                    true,
+//                                    tokenDetails.getAccessToken(),
+//                                    requestRefreshToken,
+//                                    tokenDetails.getRoles(),
+//                                    tokenDetails.getExpiryTime()))
+//                            .build()
+//                            ;
+//                })
+//                .orElseThrow(() -> new RefreshTokenNotFoundException(requestRefreshToken,
+//                        "Refresh token is not in database!"));
     }
 
     @Override
     public APIResponse<?> checkEmailVerified(String email) {
         Optional<User> user = userRepository.findOneByEmailAddressVerified(email);
-        if(user.isPresent()) {
+        if (user.isPresent()) {
             return APIResponse.builder()
                     .data(userMapper.toUserResponse(user.get()))
                     .build();
-        }else {
+        } else {
             return APIResponse.builder()
 
                     .build();
@@ -197,9 +204,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public APIResponse<?> updateVerifyCode(String userId,String verifyCode) {
+    public APIResponse<?> updateVerifyCode(String userId, String verifyCode) {
         User user = userRepository.findById(userId).orElseThrow(
-                ()-> new AppException(ErrorCode.USER_NOT_EXISTED)
+                () -> new AppException(ErrorCode.USER_NOT_EXISTED)
         );
         user.setVerificationCode(verifyCode);
         user.setVerificationExpiredCodeTime(Instant.now().plusSeconds(verificationCodeTime * 60));
@@ -213,7 +220,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public APIResponse<?> updateResetPassCode(String userId, String verifyCode) {
         User user = userRepository.findById(userId).orElseThrow(
-                ()-> new AppException(ErrorCode.USER_NOT_EXISTED)
+                () -> new AppException(ErrorCode.USER_NOT_EXISTED)
         );
         user.setResetPasswordCode(verifyCode);
         user.setResetPasswordExpiredCodeTime(Instant.now().plusSeconds(resetPasswordCodeTime * 60));
@@ -316,6 +323,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public APIResponse<?> changePassword(ChangePasswordRequest changePassword) {
         // Get current logged in user
+        log.info("Change password!");
         User userProfile = webUtils.getCurrentLogedInUser();
 
         // If the old password is not correct.
@@ -341,9 +349,9 @@ public class UserServiceImpl implements UserService {
         // generate a new access token
 
         AuthenticationResponse tokenDetails = authenticationService.authenticate(
-                new AuthenticationRequest(userProfile.getUsername(), userProfile.getPassword())
+                new AuthenticationRequest(userProfile.getUsername(), changePassword.getNewPassword())
         );
-        log.info("End refresh token");
+
         return APIResponse.<JwtResponse>builder().data(new JwtResponse(
                         userProfile.getId(),
                         tokenDetails.getDisplayName(),
@@ -396,9 +404,9 @@ public class UserServiceImpl implements UserService {
         Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
         String searchText = "%" + search.trim() + "%";
         Page<User> listStudents = studentRepositoryRead
-                .findAllSeachedStudentsByStatus(searchText, isActive, pageable);
+                .findAllSearchedStudentsByStatus(searchText, isActive, pageable);
         Page<UserResponse> response = listStudents.map(userMapper::toUserResponse);
-        log.info("Start get all active student searched by display name and email");
+
         return APIResponse.builder()
                 .data(response).build();
     }
@@ -423,6 +431,25 @@ public class UserServiceImpl implements UserService {
                 .data(userMapper.toUserResponse(userProfile))
                 .build();
 //                ResponseEntity.ok(CustomBuilder.buildUserProfileResponse(userProfile));
+    }
+
+    @Override
+    public APIResponse<?> updateImage(MultipartFile file) {
+        User user = webUtils.getCurrentLogedInUser();
+        FileRequest fileRequest = fileService.saveFile(file, user.getId(), EnumParentFileType.USER_AVATAR.name());
+        return APIResponse.builder()
+                .data(UserResponse.builder()
+                        .imageUrl(fileRequest.getPath_file())
+                        .id(user.getId())
+                        .isEnable(user.getIsEnable())
+                        .roles(user.getRoles().stream().map(role -> role.getName()).toList())
+                        .newEmailAddress(user.getNewEmailAddress())
+                        .isEmailAddressVerified(user.getIsEmailAddressVerified())
+                        .displayName(user.getDisplayName())
+                        .emailAddress(user.getEmailAddress())
+                        .loginName(user.getUsername())
+                        .build())
+                .build();
     }
 
     @Override
@@ -454,10 +481,47 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public APIResponse<?> getAllUserByListId(List<String> userIds,int page,String column,int size,String sortType) {
+    public APIResponse<?> getAllUserByListId(List<String> userIds, int page, String column, int size, String sortType,String search) {
+        log.info("{} {} {} {}", page, column, size, sortType);
         Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
-        Page<User> users=userRepository.findAllByIdIn(userIds,pageable);
-        Page<UserResponse> responses=users.map(userMapper::toUserResponse);
+        Page<User> users = userRepository.findAllByIdIn(userIds, search, pageable);
+
+        Page<UserResponse> responses = users.map(user -> {
+            log.info(user.getUsername());
+            return UserResponse.builder()
+                    .id(user.getId())
+                    .isEnable(user.getIsEnable())
+                    .roles(user.getRoles().stream().map(role -> role.getName()).toList())
+                    .newEmailAddress(user.getNewEmailAddress())
+                    .isEmailAddressVerified(user.getIsEmailAddressVerified())
+                    .displayName(user.getDisplayName())
+                    .emailAddress(user.getEmailAddress())
+                    .loginName(user.getUsername())
+                    .build();
+        });
+        log.info(responses.toString());
+        // Kiểm tra sự tồn tại của Pageable và Sort trong response
+        if (responses instanceof Page) {
+            Page<?> pageResponse = responses;
+            Sort sort = pageResponse.getSort();
+            Pageable pageableResponse = pageResponse.getPageable();
+
+            // Kiểm tra Sort và Pageable trong response
+            if (sort != null) {
+                log.info("Sort exists in response");
+                log.info(sort.toString());
+            } else {
+                log.info("Sort does not exist in response");
+            }
+
+            if (pageableResponse != null) {
+                log.info("Pageable exists in response");
+            } else {
+                log.info("Pageable does not exist in response");
+            }
+        } else {
+            log.info("Response is not a Page object");
+        }
         return APIResponse.builder()
                 .data(responses)
                 .build();
