@@ -29,6 +29,12 @@ public class StudentController {
 
     UserService userService;
 
+    @GetMapping(value="/total",produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    public APIResponse<?> getAllTotalStudents(){
+        return userService.getTotalStudents();
+    }
+
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
     public APIResponse<?> getAllActiveStudent(@RequestParam(defaultValue = DEFAULT_SEARCH) String search,

@@ -258,7 +258,7 @@ public class QuestionServiceImpl implements QuestionService {
 
     private void modifyUpdateQuestion(Question question) {
         UserRequest userProfile = identityService.getCurrentUser();
-        question.setUpdateBy(userProfile.getLoginName());
+        question.setUpdateBy(userProfile.getId());
         question.setUpdateDate(Instant.now());
     }
 

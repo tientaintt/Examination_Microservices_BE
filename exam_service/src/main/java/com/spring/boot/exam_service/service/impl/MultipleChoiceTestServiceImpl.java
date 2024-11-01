@@ -5,11 +5,8 @@ import com.spring.boot.exam_service.dto.ApiResponse;
 import com.spring.boot.exam_service.dto.request.CreateMultipleChoiceTestDTO;
 import com.spring.boot.exam_service.dto.request.UpdateMultipleChoiceTestDTO;
 import com.spring.boot.exam_service.dto.request.UserRequest;
-import com.spring.boot.exam_service.dto.response.MultipleChoiceTestResponse;
+import com.spring.boot.exam_service.dto.response.*;
 
-import com.spring.boot.exam_service.dto.response.MultipleChoiceTestWithQuestionsResponse;
-import com.spring.boot.exam_service.dto.response.MyMultipleChoiceTestResponse;
-import com.spring.boot.exam_service.dto.response.QuestionResponse;
 import com.spring.boot.exam_service.entity.*;
 import com.spring.boot.exam_service.exception.AppException;
 import com.spring.boot.exam_service.exception.ErrorCode;
@@ -133,6 +130,9 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
         }
         return ApiResponse.builder().data(response).build();
     }
+
+
+
 
     @Override
     public ApiResponse<?> getMyMultipleChoiceTests(boolean isEnded, String search, int page, String column, int size, String sortType) {
@@ -366,7 +366,7 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
 
     private void modifyUpdateMultipleChoiceTest(MultipleChoiceTest multipleChoiceTest) {
         UserRequest userProfile = identityService.getCurrentUser();
-        multipleChoiceTest.setUpdateBy(userProfile.getLoginName());
+        multipleChoiceTest.setUpdateBy(userProfile.getId());
         multipleChoiceTest.setUpdateDate(Instant.now());
     }
 }

@@ -7,6 +7,7 @@ import com.spring.boot.exam_service.dto.request.UserRequest;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -41,5 +42,8 @@ public interface IdentityClient {
                                                         @RequestParam int size,
                                                         @RequestParam String sortType,
                                                         @RequestParam String search);
+
+    @GetMapping(value = "/student/total", produces = MediaType.APPLICATION_JSON_VALUE)
+   ApiResponse<?> getAllTotalStudents();
 }
 

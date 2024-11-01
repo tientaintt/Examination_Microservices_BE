@@ -35,6 +35,9 @@ public class IdentityService {
         log.info(response.getData().toString());
         return response.getData().getContent();
     }
-
+    public int getTotalStudents(){
+        int total= (int) identityClient.getAllTotalStudents().getData();
+        return total;
+    }
 
 }

@@ -17,7 +17,7 @@ public interface UserService {
     APIResponse<?> updateVerifyCode(String userId, String verifyCode);
     APIResponse<?> updateResetPassCode(String userId, String verifyCode);
     APIResponse<?> verifyEmail(String userID, VerificationEmailRequest verificationEmailDTO);
-
+    APIResponse<?> getTotalStudents();
     APIResponse<?> resetPassword(String emailAddress, ResetPasswordRequest resetPasswordDTO);
 
     APIResponse<?> changePassword(ChangePasswordRequest changePassword);

@@ -1,5 +1,6 @@
 package com.spring.boot.identity_service.repository;
 
+import com.spring.boot.identity_service.entity.Role;
 import com.spring.boot.identity_service.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,7 +13,7 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository< User,String> {
     boolean existsByUsername(String username);
-
+    int countAllByRolesIs(Role role);
     Optional<User> findByUsername(String username);
     @Query(value = "SELECT * FROM user where username = :loginName",
             nativeQuery = true)

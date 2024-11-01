@@ -289,6 +289,13 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    @Override
+    public APIResponse<?> getTotalStudents() {
+        Optional<Role> roleStudent=roleRepository.findByName("STUDENT");
+        int count=userRepository.countAllByRolesIs(roleStudent.get());
+        return APIResponse.builder().data(count).build();
+    }
+
     private void updatePasswordReset(ResetPasswordRequest resetPasswordDTO, User userProfile) {
         userProfile.setPassword(passwordEncoder.encode(resetPasswordDTO.getPassword()));
         userProfile.setResetPasswordCode(null);

@@ -212,7 +212,7 @@ public class ScoreServiceImpl implements ScoreService {
 
     private void modifyUpdateScore(Question question) {
         UserRequest userProfile = identityService.getCurrentUser();
-        question.setUpdateBy(userProfile.getLoginName());
+        question.setUpdateBy(userProfile.getId());
         question.setUpdateDate(Instant.now());
     }
 

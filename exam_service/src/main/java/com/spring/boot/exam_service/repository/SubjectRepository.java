@@ -12,7 +12,7 @@ import java.util.Optional;
 
 @Repository
 public interface SubjectRepository extends JpaRepository<Subject,Long> {
-
+    int countByCreatedBy(String userId);
     Optional<Subject> findBySubjectCode(String code);
     @Query(value = "SELECT COUNT(*) FROM subject WHERE manager_id = :managerId", nativeQuery = true)
      int countByUserProfile(String managerId);

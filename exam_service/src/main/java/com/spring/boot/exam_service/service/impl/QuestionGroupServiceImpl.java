@@ -127,7 +127,7 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
 
     private void modifyUpdateQuestionGroup(QuestionGroup questionGroup) {
         UserRequest userProfile = identityService.getCurrentUser();
-        questionGroup.setUpdateBy(userProfile.getLoginName());
+        questionGroup.setUpdateBy(userProfile.getId());
         questionGroup.setUpdateDate(Instant.now());
     }
 

@@ -45,12 +45,12 @@ public class SubjectServiceImpl implements SubjectService {
     private final IdentityService  identityService;
     private final SubjectRegistrationRepository subjectRegistrationRepository;
     private final IdentityClient identityClient;
-    private static final String CODE_PREFIX = "classroom_";
+    private static final String CODE_PREFIX = "subject_";
     private final SubjectRepository subjectRepository;
     private  final FileClient fileClient;
     @Override
     public ApiResponse<?> getNumberSubjectManager() {
-        log.info("Get number classroom is being manage");
+        log.info("Get number subject is being manage");
         UserRequest userProfile = identityService.getCurrentUser();
         int count = subjectRepository.countByUserProfile(userProfile.getId());
         Map<String, Integer> response = new HashMap<>();
@@ -70,14 +70,14 @@ public class SubjectServiceImpl implements SubjectService {
     public ApiResponse<?> createSubject(CreateSubjectDTO DTO) {
         log.info("Start create Subject");
         UserRequest userProfile = identityService.getCurrentUser();
-        Subject classRoom = new Subject();
-        classRoom.setSubjectName(DTO.getSubjectName().trim());
-        classRoom.setSubjectCode(CODE_PREFIX + DTO.getSubjectCode().trim());
-        classRoom.setDescription(DTO.getDescription().trim());
-        classRoom.setIsPrivate(DTO.getIsPrivate());
-        classRoom.setCreatedBy(userProfile.getLoginName());
-        classRoom.setUserID(userProfile.getId());
-        Subject savedSubject = subjectRepository.save(classRoom);
+        Subject subject = new Subject();
+        subject.setSubjectName(DTO.getSubjectName().trim());
+        subject.setSubjectCode(CODE_PREFIX + DTO.getSubjectCode().trim());
+        subject.setDescription(DTO.getDescription().trim());
+        subject.setIsPrivate(DTO.getIsPrivate());
+        subject.setCreatedBy(userProfile.getLoginName());
+        subject.setUserID(userProfile.getId());
+        Subject savedSubject = subjectRepository.save(subject);
         SubjectResponse response = CustomBuilder.buildSubjectResponse(savedSubject);
         log.info("End create Subject");
         return ApiResponse.builder()
@@ -100,10 +100,10 @@ public class SubjectServiceImpl implements SubjectService {
         if (value.isEmpty()){
            throw new AppException(ErrorCode.SUBJECT_NOT_FOUND);
         }
-        Subject classRoom = value.get();
-        classRoom.setIsEnable(newStatus);
-        modifyUpdateSubject(classRoom);
-        subjectRepository.save(classRoom);
+        Subject subject = value.get();
+        subject.setIsEnable(newStatus);
+        modifyUpdateSubject(subject);
+        subjectRepository.save(subject);
         log.info("End switch Subject status to " + newStatus);
         return ApiResponse.builder().build();
     }
@@ -118,9 +118,9 @@ public class SubjectServiceImpl implements SubjectService {
         log.info("Start get all enable Subject (non-Admin)");
         Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
         String searchText = "%" + search.trim() + "%";
-        Page<Subject> classRooms = subjectRepository.findAllSearchedSubjectsByStatus(searchText,isEnable, pageable);
+        Page<Subject> subjects = subjectRepository.findAllSearchedSubjectsByStatus(searchText,isEnable, pageable);
         // Map topic to topic response DTO
-        Page<SubjectResponse> response = classRooms.map(CustomBuilder::buildSubjectResponse);
+        Page<SubjectResponse> response = subjects.map(CustomBuilder::buildSubjectResponse);
         response.forEach((item)->{
             Long total = subjectRegistrationRepository.countAllBySubjectId(item.getId());
             item.setNumberOfStudents(total);
@@ -134,12 +134,12 @@ public class SubjectServiceImpl implements SubjectService {
     /**
      * Update modify information of Subject
      *
-     * @param classRoom the entity
+     * @param subject the entity
      */
-    private void modifyUpdateSubject(Subject classRoom) {
+    private void modifyUpdateSubject(Subject subject) {
         UserRequest userProfile = identityService.getCurrentUser();
-        classRoom.setUpdateBy(userProfile.getLoginName());
-        classRoom.setUpdateDate(Instant.now());
+        subject.setUpdateBy(userProfile.getId());
+        subject.setUpdateDate(Instant.now());
     }
 
 
@@ -150,18 +150,18 @@ public class SubjectServiceImpl implements SubjectService {
         if (value.isEmpty()){
             throw new AppException(ErrorCode.SUBJECT_NOT_FOUND);
         }
-        Subject classRoom = value.get();
+        Subject subject = value.get();
         if(Objects.nonNull(DTO.getIsPrivate())){
-            modifyUpdateSubject(classRoom);
-            classRoom.setIsPrivate(DTO.getIsPrivate());
+            modifyUpdateSubject(subject);
+            subject.setIsPrivate(DTO.getIsPrivate());
         }
         if (StringUtils.isNoneBlank(DTO.getSubjectName())){
-            classRoom.setSubjectName(DTO.getSubjectName().trim());
-            modifyUpdateSubject(classRoom);
+            subject.setSubjectName(DTO.getSubjectName().trim());
+            modifyUpdateSubject(subject);
         }
         if (StringUtils.isNoneBlank(DTO.getDescription())){
-            classRoom.setDescription(DTO.getDescription().trim());
-            modifyUpdateSubject(classRoom);
+            subject.setDescription(DTO.getDescription().trim());
+            modifyUpdateSubject(subject);
         }
         if(StringUtils.isNoneBlank(DTO.getSubjectCode())){
             Optional<Subject> classroomEx = subjectRepository.findBySubjectCode(DTO.getSubjectCode().trim());
@@ -174,11 +174,11 @@ public class SubjectServiceImpl implements SubjectService {
 //                        .body(response);
                 throw new AppException(ErrorCode.CLASS_CODE_DUPLICATE_ERROR);
             }
-            classRoom.setSubjectCode(DTO.getSubjectCode().trim());
-            modifyUpdateSubject(classRoom);
+            subject.setSubjectCode(DTO.getSubjectCode().trim());
+            modifyUpdateSubject(subject);
         }
-        classRoom = subjectRepository.save(classRoom);
-        SubjectResponse response = CustomBuilder.buildSubjectResponse(classRoom);
+        subject = subjectRepository.save(subject);
+        SubjectResponse response = CustomBuilder.buildSubjectResponse(subject);
         log.info("End update Subject");
         return ApiResponse.builder()
                 .data(response)
@@ -190,26 +190,26 @@ public class SubjectServiceImpl implements SubjectService {
     @Override
     public ApiResponse<?> addStudentToSubject(AddToSubjectDTO dto) {
         log.info(dto.getStudentId().toString());
-        Optional<Subject> classRoom = subjectRepository.findById(dto.getSubjectId());
+        Optional<Subject> subject = subjectRepository.findById(dto.getSubjectId());
         UserRequest userProfile = identityService.getUserVerifiedByIdAndStatus(dto.getStudentId(),true);
 
         Optional<SubjectRegistration> classroomRegistrationExisted =
                 subjectRegistrationRepository
-                        .findBySubjectIdAndUserID(classRoom.get().getId(), userProfile.getId());
+                        .findBySubjectIdAndUserID(subject.get().getId(), userProfile.getId());
         if(classroomRegistrationExisted.isPresent()){
             return ApiResponse.builder().build();
         }
 
         SubjectRegistration subjectRegistration =
                 SubjectRegistration.builder()
-                        .subject(classRoom.get())
+                        .subject(subject.get())
                         .userID(userProfile.getId())
                         .build();
         SubjectRegistration savedSubjectRegistration =
                 subjectRegistrationRepository.save(subjectRegistration);
-        classRoom.get().getSubjectRegistrations().add(savedSubjectRegistration);
+        subject.get().getSubjectRegistrations().add(savedSubjectRegistration);
 
-        subjectRepository.save(classRoom.get());
+        subjectRepository.save(subject.get());
 
         return ApiResponse.builder().build();
     }
@@ -217,9 +217,9 @@ public class SubjectServiceImpl implements SubjectService {
     @Override
     public ApiResponse<?> getAllStudentOfSubject(Long subjectId, int page,String column,int size,String sortType,String search) {
         log.info("Start get all user of classroom by id");
-        Optional<Subject> classRoom = subjectRepository.findById(subjectId);
+        Optional<Subject> subject = subjectRepository.findById(subjectId);
 //        Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
-        if (classRoom.isEmpty()){
+        if (subject.isEmpty()){
             throw new AppException(ErrorCode.SUBJECT_NOT_FOUND);
         }
         List<String> userIdOfSubjectId= subjectRepository.getAllUserIdOfSubjectBySubjectId(subjectId);
@@ -245,9 +245,9 @@ public class SubjectServiceImpl implements SubjectService {
         log.info("Get all my classroom. Start. User is: "+userProfile.getId());
         Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
         String searchText = "%" + search.trim() + "%";
-        Page<Subject> classRooms = subjectRepository.findAllRegisteredSubjectOfUser(userProfile.getId(),searchText, pageable);
-        classRooms.stream().forEach(classroom -> log.info(classroom.toString()));
-        Page<SubjectResponse> response = classRooms.map(CustomBuilder::buildSubjectResponse);
+        Page<Subject> subjects = subjectRepository.findAllRegisteredSubjectOfUser(userProfile.getId(),searchText, pageable);
+        subjects.stream().forEach(classroom -> log.info(classroom.toString()));
+        Page<SubjectResponse> response = subjects.map(CustomBuilder::buildSubjectResponse);
         response.forEach((item)->{
             Long total = subjectRegistrationRepository.countAllBySubjectId(item.getId());
             item.setNumberOfStudents(total);
@@ -275,9 +275,9 @@ public class SubjectServiceImpl implements SubjectService {
 
     @Override
     public ApiResponse<?> removeStudentFromSubject(AddToSubjectDTO dto) {
-        Optional<Subject> classRoom = subjectRepository.findById(dto.getSubjectId());
+        Optional<Subject> subject = subjectRepository.findById(dto.getSubjectId());
         UserRequest userProfile = identityService.getUserVerifiedByIdAndStatus(dto.getStudentId(), true);
-        Optional<SubjectRegistration> classroomRegistration = subjectRegistrationRepository.findBySubjectIdAndUserID(classRoom.get().getId(), userProfile.getId());
+        Optional<SubjectRegistration> classroomRegistration = subjectRegistrationRepository.findBySubjectIdAndUserID(subject.get().getId(), userProfile.getId());
         classroomRegistration.ifPresent(registration -> subjectRegistrationRepository.deleteById(registration.getId()));
         return ApiResponse.builder().build();
     }
@@ -285,8 +285,8 @@ public class SubjectServiceImpl implements SubjectService {
     @Override
     public ResponseEntity<Resource> exportStudentsOfSubject(Long subjectId, String typeExport) {
         log.info("Start get all user of classroom by id");
-        Optional<Subject> classRoom = subjectRepository.findById(subjectId);
-        if (classRoom.isEmpty()){
+        Optional<Subject> subject = subjectRepository.findById(subjectId);
+        if (subject.isEmpty()){
             throw new AppException(ErrorCode.SUBJECT_NOT_FOUND);
         }
         List<String> userIdOfSubjectId= subjectRepository.getAllUserIdOfSubjectBySubjectId(subjectId);
@@ -298,7 +298,7 @@ public class SubjectServiceImpl implements SubjectService {
         UserIdsDTO userIdsDTO = UserIdsDTO.builder().userIds(userIdOfSubjectId).build();
        Page<UserRequest> userRequests= identityClient.getAllUsersByUserIds(userIdsDTO,0,"",1000,"","").getData();
        List<UserRequest> userRequestList=userRequests.stream().toList();
-       ExportStudentOfSubjectRequest exportStudentOfSubjectRequest= ExportStudentOfSubjectRequest.builder().userRequests(userRequestList).className(classRoom.get().getSubjectName()).idClass(classRoom.get().getId()).build();
+       ExportStudentOfSubjectRequest exportStudentOfSubjectRequest= ExportStudentOfSubjectRequest.builder().userRequests(userRequestList).className(subject.get().getSubjectName()).idClass(subject.get().getId()).build();
        return fileClient.exportStudentOfClass(exportStudentOfSubjectRequest,typeExport);
 
     }
