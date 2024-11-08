@@ -50,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -170,8 +171,12 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
     @Override
     public ApiResponse<?> importQuestionsIntoQuestionGroup(MultipartFile file, long questionGroupId) {
         try {
-            List<Question> questions=this.readQuestionsFromExcel(file.getInputStream(),questionGroupId);
-            if(questions.isEmpty()){
+            Optional<QuestionGroup> questionGroupOp = questionGroupRepository.findById(questionGroupId);
+            if(questionGroupOp.isEmpty()) {
+                throw new AppException(ErrorCode.QUESTION_GROUP_NOT_FOUND_ERROR);
+            }
+            List<Question> questions = this.readQuestionsFromExcel(file.getInputStream(), questionGroupId);
+            if (questions.isEmpty()) {
                 throw new AppException(ErrorCode.CANNOT_READ_FILE);
             }
         } catch (IOException e) {
@@ -199,53 +204,69 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
                     if (questionType1.isPresent()) {
                         Optional<QuestionGroup> questionGroup = questionGroupRepository.findById(questionGroupId);
                         if (questionGroup.isPresent()) {
-                            Question question = Question.builder()
-                                    .questionType(questionType1.get())
-                                    .content(questionText)
-                                    .questionGroup(questionGroup.get())
-                                    .build();
-                            Question finalQuestion = questionRepository.save(question);
-                            List<String> listAnswerContent = Arrays.asList(answers.split(","));
-                            List<String> listCorrectAnswer = Arrays.asList(correctAnswer.split(","));
-                            listAnswerContent.forEach(answerContent -> {
-                                Optional<Answer> answer1 = answerRepository.findByAnswer(answerContent);
-                                if (answer1.isEmpty()) {
-                                    Answer save = answerRepository.save(Answer.builder()
-                                            .answer(answerContent)
-                                            .build());
-                                    listCorrectAnswer.forEach(correctAnswerContent -> {
-                                        answerQuestionRepository.save(
-                                                AnswerQuestion.builder()
-                                                        .answer(save)
-                                                        .question(finalQuestion)
-                                                        .isCorrect(correctAnswerContent.equals(save.getAnswer()))
-                                                        .build());
-                                    });
+                            if(questionText.isEmpty()||questionText.isBlank()){
+                                throw new AppException(ErrorCode.QUESTION_CONTENT_NOT_FOUND_ERROR);
+                            }else {
+                                Question question = Question.builder()
+                                        .questionType(questionType1.get())
+                                        .content(questionText)
+                                        .questionGroup(questionGroup.get())
+                                        .build();
+                                Question finalQuestion = questionRepository.save(question);
 
+                                List<String> listAnswerContent = Arrays.stream(answers.split("\\|"))
+                                        .map(String::trim)
+                                        .collect(Collectors.toList());
 
-                                } else {
+                                List<String> listCorrectAnswer = Arrays.stream(correctAnswer.split("\\|"))
+                                        .map(String::trim)
+                                        .collect(Collectors.toList());
+                                log.info("Correct {}",correctAnswer);
+                                log.info("Answer {}",answers);
 
-                                    listCorrectAnswer.forEach(correctAnswerContent -> {
-                                        answerQuestionRepository.save(
-                                                AnswerQuestion.builder()
-                                                        .answer(answer1.get())
-                                                        .question(finalQuestion)
-                                                        .isCorrect(correctAnswerContent.equals(answer1.get().getAnswer()))
-                                                        .build());
-                                    });
+                                if (listAnswerContent.isEmpty()) {
+                                    throw new AppException(ErrorCode.NO_ANSWER_FOUND);
+                                }
+                                if (listCorrectAnswer.isEmpty()) {
+                                    throw new AppException(ErrorCode.NO_CORRECT_ANSWER_FOUND);
                                 }
 
-                            });
 
-                            questions.add(finalQuestion);
-                        };
+                                listAnswerContent.forEach(answerContent -> {
+                                    Optional<Answer> answerOptional = answerRepository.findByAnswer(answerContent);
+                                    Answer answer;
 
+                                    if (answerOptional.isEmpty()) {
+
+                                        answer = answerRepository.save(
+                                                Answer.builder().answer(answerContent).build()
+                                        );
+                                    } else {
+
+                                        answer = answerOptional.get();
+                                    }
+
+                                    boolean isCorrect = listCorrectAnswer.contains(answerContent);
+                                    log.info("Is correct {}",String.valueOf(isCorrect));
+                                    answerQuestionRepository.save(
+                                            AnswerQuestion.builder()
+                                                    .answer(answer)
+                                                    .question(finalQuestion)
+                                                    .isCorrect(isCorrect)
+                                                    .build()
+                                    );
+                                });
+
+
+                                questions.add(finalQuestion);
+                            }
+                        } else {
+                            throw new AppException(ErrorCode.QUESTION_GROUP_NOT_FOUND_ERROR);
+                        }
                     } else {
                         throw new AppException(ErrorCode.QUESTION_TYPE_NOT_FOUND_ERROR);
                     }
-
                 }
-
             }
         } catch (IOException e) {
             throw new AppException(ErrorCode.CANNOT_READ_FILE);
@@ -253,6 +274,7 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
 
         return questions;
     }
+
 
     @Override
     public ResponseEntity<InputStreamResource> exportQuestionOfQuestionGroup(Long questionGroupId) {
@@ -310,15 +332,20 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
                     row.createCell(1).setCellValue(question.getQuestionType());
                     StringBuilder dapAnDung = new StringBuilder();
                     StringBuilder allAnswers = new StringBuilder();
+
                     for (AnswerResponse answer : question.getAnswers()) {
-                        allAnswers.append(answer.getAnswerContent()).append(", ");
-                        if (answer.getIsCorrect() == true) {
-                            dapAnDung.append(answer.getAnswerContent()).append(", ");
-                            ;
+                        allAnswers.append(answer.getAnswerContent()).append(" | ");
+                        if (answer.getIsCorrect()) {
+                            dapAnDung.append(answer.getAnswerContent()).append(" | ");
                         }
                     }
-                    allAnswers.deleteCharAt(allAnswers.length() - 2); // Xóa dấu phẩy cuối cùng
-                    dapAnDung.deleteCharAt(dapAnDung.length() - 2);
+
+                    if (allAnswers.length() > 0) {
+                        allAnswers.delete(allAnswers.length() - 3, allAnswers.length()); // Xóa ", " cuối cùng
+                    }
+                    if (dapAnDung.length() > 0) {
+                        dapAnDung.delete(dapAnDung.length() - 3, dapAnDung.length()); // Xóa ", " cuối cùng nếu có đáp án đúng
+                    }
                     row.createCell(2).setCellValue(allAnswers.toString());
                     row.createCell(3).setCellValue(dapAnDung.toString());
                     i++;

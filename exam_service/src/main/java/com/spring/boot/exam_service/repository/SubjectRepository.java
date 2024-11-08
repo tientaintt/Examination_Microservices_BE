@@ -11,13 +11,32 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface SubjectRepository extends JpaRepository<Subject,Long> {
+public interface SubjectRepository extends JpaRepository<Subject, Long> {
+    @Query(value = "SELECT COUNT(sr.userid) " +
+            "FROM subject_registration sr " +
+            "WHERE sr.subject_id IN  " +
+            "(" +
+            "SELECT s.id " +
+            "FROM subject s " +
+            "WHERE s.manager_id like :managerId" +
+            ")"
+            , nativeQuery = true)
+    Long getNumberStudentManagementByManagerId(String managerId);
+
+    int countByUserID(String managerId);
+
     int countByCreatedBy(String userId);
+
     Optional<Subject> findBySubjectCode(String code);
+
     @Query(value = "SELECT COUNT(*) FROM subject WHERE manager_id = :managerId", nativeQuery = true)
-     int countByUserProfile(String managerId);
+    int countByUserProfile(String managerId);
+
     @Query(value = "select * FROM subject where (subject_name like  :searchText or subject_code like :searchText)  and is_enable = :isEnable", nativeQuery = true)
     Page<Subject> findAllSearchedSubjectsByStatus(String searchText, Boolean isEnable, Pageable pageable);
+
+    @Query(value = "select * FROM subject where manager_Id like :managerId and (subject_name like  :searchText or subject_code like :searchText) and is_private = :isPrivate", nativeQuery = true)
+    Page<Subject> findAllSubjectsByManagerId(String managerId, String searchText, Boolean isPrivate, Pageable pageable);
 
     @Query(value = "select * FROM subject where subject_name like :subjectName ", nativeQuery = true)
     Page<Subject> findAllSubjectsBySubjectName(String subjectName, Pageable pageable);
@@ -30,14 +49,17 @@ public interface SubjectRepository extends JpaRepository<Subject,Long> {
 
     @Query(value = "select * FROM subject where id = :subjectId and is_enable = :isEnable", nativeQuery = true)
     Optional<Subject> findSubjectByIdAndStatus(Long subjectId, Boolean isEnable);
+
     @Query(value = "Select cr.userID from Subject cl right join SubjectRegistration cr  on cl.id = cr.subject.id " +
-            "where cl.id = :subjectroomId"
+            "where cl.id = :subjectId"
     )
-    List<String> getAllUserIdOfSubjectBySubjectId(Long subjectroomId);
+    List<String> getAllUserIdOfSubjectBySubjectId(Long subjectId);
+
     @Query("SELECT cl FROM Subject cl left join SubjectRegistration cr on cl.id = cr.subject.id \n" +
             "where cr.userID like :userID \n" +
             "and (cl.subjectCode like :searchText or cl.subjectName like :searchText)")
     Page<Subject> findAllRegisteredSubjectOfUser(String userID, String searchText, Pageable pageable);
-    @Query("select cl from Subject cl where cl.id = :subjectroomId and cl.isEnable=true")
-    Optional<Subject> findActiveSubjectById(Long subjectroomId);
+
+    @Query("select cl from Subject cl where cl.id = :subjectId and cl.isEnable=true")
+    Optional<Subject> findActiveSubjectById(Long subjectId);
 }

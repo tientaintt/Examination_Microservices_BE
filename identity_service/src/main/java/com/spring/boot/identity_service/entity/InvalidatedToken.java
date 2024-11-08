@@ -1,5 +1,6 @@
 package com.spring.boot.identity_service.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.*;
@@ -17,6 +18,7 @@ import java.util.Date;
 @Entity
 public class InvalidatedToken extends AbstractAuditingEntity {
     @Id
+    @Column(length = 36)
     String id;
 
     Date expiryTime;

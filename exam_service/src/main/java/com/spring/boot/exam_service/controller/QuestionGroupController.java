@@ -81,7 +81,7 @@ public class QuestionGroupController {
     }
 
     @PutMapping(value = "/update/{questionGroupId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
     public ApiResponse<?> updateQuestionGroup(@PathVariable(name = "questionGroupId") Long questionGroupId,
                                                  @Valid @RequestBody UpdateQuestionGroupDTO DTO){
         return questionGroupService.updateQuestionGroup(questionGroupId, DTO);

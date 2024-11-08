@@ -3,6 +3,7 @@ package com.spring.boot.exam_service.service.impl;
 
 import com.spring.boot.exam_service.dto.ApiResponse;
 import com.spring.boot.exam_service.dto.request.CreateMultipleChoiceTestDTO;
+import com.spring.boot.exam_service.dto.request.NotificationRequest;
 import com.spring.boot.exam_service.dto.request.UpdateMultipleChoiceTestDTO;
 import com.spring.boot.exam_service.dto.request.UserRequest;
 import com.spring.boot.exam_service.dto.response.*;
@@ -11,6 +12,7 @@ import com.spring.boot.exam_service.entity.*;
 import com.spring.boot.exam_service.exception.AppException;
 import com.spring.boot.exam_service.exception.ErrorCode;
 import com.spring.boot.exam_service.repository.*;
+import com.spring.boot.exam_service.repository.httpclient.NotificationClient;
 import com.spring.boot.exam_service.service.IdentityService;
 import com.spring.boot.exam_service.service.MultipleChoiceTestService;
 import com.spring.boot.exam_service.service.QuestionService;
@@ -48,9 +50,11 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
     //    private final MailService mailService;
     IdentityService identityService;
     ScoreRepository scoreRepository;
+    private final NotificationClient notificationClient;
 
     @Override
-    public ApiResponse<?> getMultipleChoiceTest(Long testId) {
+    public ApiResponse<?> getMultipleChoiceTest(Long testId,int page, String column, int size, String sortType) {
+        Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
         String myId = identityService.getCurrentUser().getId();
         Optional<MultipleChoiceTest> multipleChoiceTestOp = multipleChoiceTestRepository.findById(testId);
         if (multipleChoiceTestOp.isEmpty()) {
@@ -58,11 +62,9 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
         }
         MultipleChoiceTest multipleChoiceTest = multipleChoiceTestOp.get();
         List<Long> questionIds = testQuestionRepository.findQuestionIdsOfTest(multipleChoiceTest.getId());
-        List<Question> questions = questionRepository.findAllByIds(questionIds);
-        List<QuestionResponse> questionsOfTheTest =
-                questions.stream()
-                        .map(question -> CustomBuilder.buildQuestionResponse(question,answerRepository.findListAnswerByIdQuestion(question.getId())))
-                        .collect(Collectors.toList());
+        Page<Question> questions = questionRepository.findAllByIds(questionIds,pageable);
+        Page<QuestionResponse> questionsOfTheTest =
+                questions.map(question -> CustomBuilder.buildQuestionResponse(question,answerRepository.findListAnswerByIdQuestion(question.getId())));
         MultipleChoiceTestWithQuestionsResponse response =
                 CustomBuilder.buildMultipleChoiceTestWithQuestionsResponse(multipleChoiceTest, questionsOfTheTest);
         Optional<Score> score = scoreRepository.findByMultipleChoiceTestIdAndUserID(response.getId(), myId);
@@ -94,6 +96,35 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
         Long unixTime2WeeksLater = Timestamp.from(ZonedDateTime.now().toInstant().plus(Period.ofWeeks(2))).getTime();
         List<MyMultipleChoiceTestResponse> response =
                 multipleChoiceTestRepository.find2WeeksAroundMCTest(myId, unixTime2WeeksAgo, unixTime2WeeksLater, searchText, pageable);
+        return ApiResponse.builder().data(response).build();
+    }
+
+    @Override
+    public ApiResponse<?> getTeacherMultipleChoiceTestsOf2WeeksAround(String search, int page, String column, int size, String sortType) {
+        String myId = identityService.getCurrentUser().getId();
+        Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
+        String searchText = "%" + search.trim() + "%";
+        Long unixTime2WeeksAgo = Timestamp.from(ZonedDateTime.now().toInstant().minus(Period.ofWeeks(2))).getTime();
+        Long unixTime2WeeksLater = Timestamp.from(ZonedDateTime.now().toInstant().plus(Period.ofWeeks(2))).getTime();
+        List<MyMultipleChoiceTestResponse> response =
+                multipleChoiceTestRepository.findMCTestOfSubjectManagerAroundTwoWeek(myId, unixTime2WeeksAgo, unixTime2WeeksLater, searchText, pageable);
+        return ApiResponse.builder().data(response).build();
+    }
+
+    @Override
+    public ApiResponse<?> getAllMultipleChoiceTestsManagement(String search, int page, String column, int size, String sortType, Long startOfDate, Long endOfDate) {
+        String myId = identityService.getCurrentUser().getId();
+        Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
+        String searchText = "%" + search.trim() + "%";
+        Page<MyMultipleChoiceTestResponse> response ;
+        if(Objects.nonNull(endOfDate)){
+            response =
+                    multipleChoiceTestRepository.findMCTestManagementByDay(myId,searchText,startOfDate,endOfDate, pageable);
+
+        } else {
+            response = multipleChoiceTestRepository.
+                    findNotEndedMultipleChoiceTestsManagement(myId,startOfDate, searchText, pageable);
+        }
         return ApiResponse.builder().data(response).build();
     }
 
@@ -307,8 +338,14 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
                     addRandomQuestionToTestByQuestionGroupId
                             (multipleChoiceTest.getId(), dto.getRandomQuestions());
         }
-        MultipleChoiceTestWithQuestionsResponse response = CustomBuilder.buildMultipleChoiceTestWithQuestionsResponse(multipleChoiceTest, questionsOfTheTest);
-
+        MultipleChoiceTestResponse response = CustomBuilder.buildMultipleChoiceTestResponse(multipleChoiceTest);
+        NotificationRequest notificationRequest=NotificationRequest.builder()
+                .senderId(multipleChoiceTest.getCreatedBy())
+                .receiverId("55420d21-d239-4354-be20-c452c9b72af9")
+                .title("Create Multiple Choice Test")
+                .idOfTypeNotify(multipleChoiceTest.getId())
+                .build();
+        notificationClient.sendNotification(notificationRequest);
         // Send notification email to student in this classroom
 //        mailService.sendTestCreatedNotificationEmail(dto.getClassroomId(), multipleChoiceTest);
         return ApiResponse.builder().data(response).build();

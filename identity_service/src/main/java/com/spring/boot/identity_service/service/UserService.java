@@ -25,11 +25,13 @@ public interface UserService {
     APIResponse<?> updateUserProfile(UpdateUserRequest dto);
 
     APIResponse<?> getAllStudentsByStatus(String search, int page, String column, int size, String sortType, boolean isActive);
-
+    APIResponse<?> getAllTeachersByStatus(String search, int page, String column, int size, String sortType, boolean isActive);
     APIResponse<?> getAllVerifiedStudents(String search, int page, String column, int size, String sortType);
-
+    APIResponse<?> getAllVerifiedTeachers(String search, int page, String column, int size, String sortType);
     APIResponse<?> getCurrentLoggedInUser();
     APIResponse<?> updateImage(MultipartFile file);
     APIResponse<?> deleteUser(String userID);
+    APIResponse<?> getAllStudentId();
+
     APIResponse<?> getAllUserByListId(List<String> userIds,int page,String column,int size,String sortType,String search);
 }

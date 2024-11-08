@@ -5,6 +5,7 @@ import com.spring.boot.exam_service.dto.ApiResponse;
 import com.spring.boot.exam_service.dto.request.UserRequest;
 import com.spring.boot.exam_service.dto.response.ReportTestByMonthResponse;
 import com.spring.boot.exam_service.dto.response.ReportTotalResponse;
+import com.spring.boot.exam_service.dto.response.ReportTotalTeacherResponse;
 import com.spring.boot.exam_service.repository.MultipleChoiceTestRepository;
 import com.spring.boot.exam_service.repository.SubjectRepository;
 import com.spring.boot.exam_service.service.IdentityService;
@@ -43,6 +44,22 @@ public class ReportServiceImpl implements ReportService {
                         .totalStudent(totalStudents)
                         .totalSubjects(totalSubjects)
                         .totalTests(totalTests)
+                        .build())
+                .build();
+    }
+
+    @Override
+    public ApiResponse<?> reportTeacherTotal() {
+        UserRequest currentUser = identityService.getCurrentUser();
+        int totalStudents= Math.toIntExact(subjectRepository.getNumberStudentManagementByManagerId(currentUser.getId()));
+        int totalTests= multipleChoiceTestRepository.countByCreatedBy(currentUser.getId());
+        int totalSubjects= subjectRepository.countByUserID(currentUser.getId());
+        int totalQuestions= multipleChoiceTestRepository.countByCreatedBy(currentUser.getId());
+        return ApiResponse.builder().data(ReportTotalTeacherResponse.builder()
+                        .totalStudents(totalStudents)
+                        .totalSubjects(totalSubjects)
+                        .totalTests(totalTests)
+                        .totalQuestions(totalQuestions)
                         .build())
                 .build();
     }

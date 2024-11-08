@@ -5,6 +5,7 @@ import com.spring.boot.exam_service.constants.Constants;
 import com.spring.boot.exam_service.constants.ErrorMessage;
 import com.spring.boot.exam_service.dto.response.*;
 import com.spring.boot.exam_service.entity.*;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -14,10 +15,32 @@ import java.util.List;
 
 public class CustomBuilder {
 
-    public static ScoreResponse buildScoreResponse(Score score, List<SubmittedQuestionResponse> submittedQuestionResponses) {
+//    public static ScoreResponse buildScoreResponse(Score score, List<SubmittedQuestionResponse> submittedQuestionResponses) {
+//        return ScoreResponse.builder()
+//                .id(score.getId())
+//                .totalScore(score.getTotalCore())
+//                .isLate(score.isLate())
+//                .SubmittedDate(score.getCreatedDate().toEpochMilli())
+//                .multipleChoiceTest(CustomBuilder.buildMultipleChoiceTestResponse(score.getMultipleChoiceTest()))
+//                .submittedQuestions(submittedQuestionResponses)
+//                .targetScore(score.getTargetScore())
+//                .build();
+//    }
+    public static ScoreResponse buildScoreResponse(Score score, Page<SubmittedQuestionResponse> submittedQuestionResponses) {
         return ScoreResponse.builder()
                 .id(score.getId())
-                .totalScore(score.getTotalCore())
+                .totalScore(score.getTotalScore())
+                .isLate(score.isLate())
+                .SubmittedDate(score.getCreatedDate().toEpochMilli())
+                .multipleChoiceTest(CustomBuilder.buildMultipleChoiceTestResponse(score.getMultipleChoiceTest()))
+                .submittedQuestions(submittedQuestionResponses)
+                .targetScore(score.getTargetScore())
+                .build();
+    }
+    public static ScoreDTO buildScoreResponse(Score score, List<SubmittedQuestionResponse> submittedQuestionResponses) {
+        return ScoreDTO.builder()
+                .id(score.getId())
+                .totalScore(score.getTotalScore())
                 .isLate(score.isLate())
                 .SubmittedDate(score.getCreatedDate().toEpochMilli())
                 .multipleChoiceTest(CustomBuilder.buildMultipleChoiceTestResponse(score.getMultipleChoiceTest()))
@@ -52,19 +75,30 @@ public class CustomBuilder {
                 .build();
     }
 
-    public static MultipleChoiceTestWithQuestionsResponse buildMultipleChoiceTestWithQuestionsResponse(MultipleChoiceTest multipleChoiceTest, List<QuestionResponse> questions) {
-        return MultipleChoiceTestWithQuestionsResponse.builder()
-                .id(multipleChoiceTest.getId())
-                .testName(multipleChoiceTest.getTestName())
-                .description(multipleChoiceTest.getDescription())
-                .startDate(multipleChoiceTest.getStartDate())
-                .endDate(multipleChoiceTest.getEndDate())
-                .testingTime(multipleChoiceTest.getTestingTime())
-                .questions(questions)
-                .targetScore(multipleChoiceTest.getTargetScore())
-                .build();
-    }
-
+//    public static MultipleChoiceTestWithQuestionsResponse buildMultipleChoiceTestWithQuestionsResponse(MultipleChoiceTest multipleChoiceTest, List<QuestionResponse> questions) {
+//        return MultipleChoiceTestWithQuestionsResponse.builder()
+//                .id(multipleChoiceTest.getId())
+//                .testName(multipleChoiceTest.getTestName())
+//                .description(multipleChoiceTest.getDescription())
+//                .startDate(multipleChoiceTest.getStartDate())
+//                .endDate(multipleChoiceTest.getEndDate())
+//                .testingTime(multipleChoiceTest.getTestingTime())
+//                .questions(questions)
+//                .targetScore(multipleChoiceTest.getTargetScore())
+//                .build();
+//    }
+public static MultipleChoiceTestWithQuestionsResponse buildMultipleChoiceTestWithQuestionsResponse(MultipleChoiceTest multipleChoiceTest, Page<QuestionResponse> questions) {
+    return MultipleChoiceTestWithQuestionsResponse.builder()
+            .id(multipleChoiceTest.getId())
+            .testName(multipleChoiceTest.getTestName())
+            .description(multipleChoiceTest.getDescription())
+            .startDate(multipleChoiceTest.getStartDate())
+            .endDate(multipleChoiceTest.getEndDate())
+            .testingTime(multipleChoiceTest.getTestingTime())
+            .questions(questions)
+            .targetScore(multipleChoiceTest.getTargetScore())
+            .build();
+}
     public static SubjectResponse buildSubjectResponse(Subject classRoom){
         return SubjectResponse.builder()
                 .id(classRoom.getId())

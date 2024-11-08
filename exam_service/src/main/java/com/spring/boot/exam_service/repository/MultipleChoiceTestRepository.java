@@ -1,5 +1,6 @@
 package com.spring.boot.exam_service.repository;
 
+import com.spring.boot.exam_service.dto.response.MultipleChoiceTestResponse;
 import com.spring.boot.exam_service.dto.response.MyMultipleChoiceTestResponse;
 
 import com.spring.boot.exam_service.dto.response.ReportTestByMonthResponse;
@@ -15,6 +16,14 @@ import java.util.List;
 
 @Repository
 public interface MultipleChoiceTestRepository extends JpaRepository<MultipleChoiceTest,Long> {
+    @Query(
+            value = "SELECT count (*) " +
+                    "FROM MultipleChoiceTest test " +
+                    "where test.subject.id = :subjectId"
+    )
+    long countTestBySubjectId(Long subjectId);
+
+
     int countByCreatedBy(String idUser);
     @Query(value = "select * FROM multiple_choice_test \n" +
             "\twhere subject_id = :subjectId \n" +
@@ -40,13 +49,25 @@ public interface MultipleChoiceTestRepository extends JpaRepository<MultipleChoi
 
     @Query("select new com.spring.boot.exam_service.dto.response.MyMultipleChoiceTestResponse(mct.id, mct.createdBy , mct.startDate , mct.endDate, mct.testName,mct.description, mct.testingTime, \n" +
             "\tmct.subject.id , cr.subjectName , cr.subjectCode , cr.description, false)\n" +
-            "\tFROM MultipleChoiceTest mct left join Subject cr on mct.score.id = cr.id\n" +
+            "\tFROM MultipleChoiceTest mct left join Subject cr on mct.subject.id = cr.id\n" +
             "\twhere mct.subject.id IN (\n" +
             "\t\tSELECT crr.subject.id FROM SubjectRegistration crr \n" +
             "\t\t\twhere crr.userID = :myId \n" +
             "\t\t\tand crr.isEnable = true\n" +
             "    ) and mct.endDate > :unixTimeNow and mct.testName like :searchText")
     Page<MyMultipleChoiceTestResponse> findMyNotEndedMultipleChoiceTests(String myId, Long unixTimeNow, String searchText, Pageable pageable);
+
+    @Query("select new com.spring.boot.exam_service.dto.response.MyMultipleChoiceTestResponse(mct.id, mct.createdBy , mct.startDate , mct.endDate, mct.testName,mct.description, mct.testingTime, \n" +
+            "\tmct.subject.id , cr.subjectName , cr.subjectCode , cr.description, false)\n" +
+            "\tFROM MultipleChoiceTest mct left join Subject cr on mct.subject.id = cr.id\n" +
+            "\twhere mct.subject.id IN "  +
+            "(" +
+            "SELECT s.id " +
+            "FROM Subject s " +
+            "WHERE s.userID like :managerId" +
+            ") "+
+            " and mct.endDate > :unixTimeNow and mct.testName like :searchText")
+    Page<MyMultipleChoiceTestResponse> findNotEndedMultipleChoiceTestsManagement(String managerId, Long unixTimeNow, String searchText, Pageable pageable);
 
     @Query("select new com.spring.boot.exam_service.dto.response.MyMultipleChoiceTestResponse(mct.id, mct.createdBy , mct.startDate , mct.endDate, mct.testName,mct.description, mct.testingTime, \n" +
             "\tmct.subject.id , cr.subjectName , cr.subjectCode , cr.description, false)\n" +
@@ -66,6 +87,42 @@ public interface MultipleChoiceTestRepository extends JpaRepository<MultipleChoi
             "\t\t\tand crr.isEnable = true\n" +
             "    ) and ( mct.startDate >= :startDay and mct.startDate <= :endDay ) and mct.testName like :searchText")
     Page<MyMultipleChoiceTestResponse> findMCTestByDay(String userId,Long startDay, Long endDay,String searchText, Pageable pageable);
+
+    @Query("select new com.spring.boot.exam_service.dto.response.MyMultipleChoiceTestResponse(mct.id, mct.createdBy , mct.startDate , mct.endDate, mct.testName,mct.description, mct.testingTime, \n" +
+            "\tmct.subject.id , cr.subjectName , cr.subjectCode , cr.description, false)\n" +
+            "\tFROM MultipleChoiceTest mct left join Subject cr on mct.subject.id = cr.id\n" +
+            "\twhere mct.subject.id IN " +
+            "(" +
+            "SELECT s.id " +
+            "FROM Subject s " +
+            "WHERE s.userID like :managerId" +
+            ") "+
+            "and ( mct.startDate >= :startDay and mct.startDate <= :endDay ) and mct.testName like :searchText")
+    Page<MyMultipleChoiceTestResponse> findMCTestManagementByDay(String managerId, String searchText , Long startDay, Long endDay, Pageable pageable);
+
+    @Query("select new com.spring.boot.exam_service.dto.response.MyMultipleChoiceTestResponse(mct.id, mct.createdBy , mct.startDate , mct.endDate, mct.testName,mct.description, mct.testingTime, \n" +
+            "\tmct.subject.id , cr.subjectName , cr.subjectCode , cr.description, false)\n" +
+            "\tFROM MultipleChoiceTest mct left join Subject cr on mct.subject.id = cr.id\n" +
+            "\twhere mct.subject.id IN " +
+            "(" +
+            "SELECT s.id " +
+            "FROM Subject s " +
+            "WHERE s.userID like :managerId" +
+            ")"+
+            "   and ( mct.startDate >= :startDay and mct.startDate <= :endDay ) and mct.testName like :searchText")
+    Page<MyMultipleChoiceTestResponse> findMCTestOfSubjectManagerByDay(String managerId,Long startDay, Long endDay,String searchText, Pageable pageable);
+
+    @Query("select new com.spring.boot.exam_service.dto.response.MyMultipleChoiceTestResponse(mct.id, mct.createdBy , mct.startDate , mct.endDate, mct.testName,mct.description, mct.testingTime, \n" +
+            "\tmct.subject.id , cr.subjectName , cr.subjectCode , cr.description, false)\n" +
+            "\tFROM MultipleChoiceTest mct left join Subject cr on mct.subject.id = cr.id\n" +
+            "\twhere mct.subject.id IN " +
+            "(" +
+            "SELECT s.id " +
+            "FROM Subject s " +
+            "WHERE s.userID like :managerId" +
+            ")"+
+            "   and ( mct.startDate >= :startDay and mct.startDate <= :endDay ) and mct.testName like :searchText")
+    List<MyMultipleChoiceTestResponse> findMCTestOfSubjectManagerAroundTwoWeek(String managerId,Long startDay, Long endDay,String searchText, Pageable pageable);
 
     @Query("select new com.spring.boot.exam_service.dto.response.MyMultipleChoiceTestResponse(mct.id, mct.createdBy , mct.startDate , mct.endDate, mct.testName,mct.description, mct.testingTime, \n" +
             "\tmct.subject.id , cr.subjectName , cr.subjectCode , cr.description, false)\n" +

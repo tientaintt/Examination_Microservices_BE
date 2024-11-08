@@ -1,7 +1,6 @@
 package com.spring.boot.exam_service.exception;
 
 
-
 import com.spring.boot.exam_service.constants.ErrorMessage;
 import com.spring.boot.exam_service.dto.ApiResponse;
 import feign.FeignException;
@@ -25,9 +24,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(FeignException.class)
     public ResponseEntity<?> handleFeignException(FeignException ex) {
         String responseBody = StandardCharsets.UTF_8.decode(ex.responseBody().get()).toString();
-       log.info(String.valueOf(ex.request().httpMethod()));
-       log.info(ex.request().url());
-        log.info("Response body: {}",responseBody );
+        log.info(String.valueOf(ex.request().httpMethod()));
+        log.info(ex.request().url());
+        log.info("Response body: {}", responseBody);
         int httpStatus = ex.status();
         HttpStatus status = HttpStatus.valueOf(httpStatus);
         log.info("HTTP Status: {}", status);
@@ -36,17 +35,17 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     ResponseEntity<ApiResponse> runtimeExceptionHandler(RuntimeException e) {
-        log.info("RuntimeException in exam");
+        log.info("Runtime exception in exam");
         log.info(e.toString());
-        ApiResponse response=new ApiResponse();
-        response.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage() +e.getMessage());
+        ApiResponse response = new ApiResponse();
+        response.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage() + " " + e.getMessage());
         response.setCode(ErrorCode.UNAUTHENTICATED.getCode());
         return ResponseEntity.status(ErrorCode.UNCATEGORIZED_EXCEPTION.getHttpStatusCode()).body(response);
     }
 
     @ExceptionHandler(AppException.class)
     ResponseEntity<ApiResponse> appExceptionHandler(AppException e) {
-        ApiResponse response=new ApiResponse();
+        ApiResponse response = new ApiResponse();
         response.setMessage(e.getErrorCode().getMessage());
         response.setCode(e.getErrorCode().getCode());
         return ResponseEntity.status(e.getErrorCode().getHttpStatusCode()).body(response);
@@ -67,11 +66,12 @@ public class GlobalExceptionHandler {
 //        response.setMessage(errorCode.getMessage());
 //        return ResponseEntity.status(errorCode.getHttpStatusCode()).body(response);
         log.info("MethodArgumentNotValidException");
+        log.info(e.toString());
         BindingResult result = e.getBindingResult();
-        ApiResponse response=new ApiResponse();
+        ApiResponse response = new ApiResponse();
         String errorMessageName = result.getAllErrors().get(0).getDefaultMessage();
         String errorField = Objects.requireNonNull(((FieldError) result.getAllErrors().get(0)).getField());
-        int errorCode ;
+        int errorCode;
         String message = "";
         if (ErrorMessage.COMMON_FIELD_REQUIRED.name().equals(errorMessageName)) {
             errorCode = ErrorCode.COMMON_FIELD_REQUIRED_ERROR.getCode();

@@ -8,11 +8,13 @@ import com.google.api.services.drive.model.Permission;
 import com.springboot.file_service.dto.request.ExportStudentOfClassRequest;
 import com.springboot.file_service.dto.request.FileRelationshipDTO;
 import com.springboot.file_service.dto.request.UserRequest;
+import com.springboot.file_service.dto.response.ApiResponse;
 import com.springboot.file_service.entity.FileRelationship;
 import com.springboot.file_service.exception.AppException;
 import com.springboot.file_service.exception.ErrorCode;
 
 import com.springboot.file_service.repository.IFileRelationshipRepository;
+import com.springboot.file_service.repository.httpclient.ExamClient;
 import com.springboot.file_service.utils.Constants;
 import com.springboot.file_service.utils.EnumParentFileType;
 import com.springboot.file_service.utils.Extensions;
@@ -57,6 +59,16 @@ public class FileService {
     IdentityService identityService;
 
     IFileRelationshipRepository fileRelationshipRepository;
+    private final ExamClient examClient;
+
+    public ApiResponse<?> importQuestionsIntoQuestionGroup(MultipartFile file, Long questionGrId) {
+
+        return examClient.importQuestionsIntoQuestionGroup(file, questionGrId);
+    }
+    public ApiResponse<?> importStudentsIntoSubject(MultipartFile file, Long questionId) {
+
+        return examClient.importStudentsIntoSubject(file, questionId);
+    }
 
     public ByteArrayInputStream exportStudentOfClass(ExportStudentOfClassRequest request, String typeExport) {
         log.info("ExportStudentOfClass");
@@ -90,7 +102,7 @@ public class FileService {
                 return new ByteArrayInputStream(out.toByteArray());
             } catch (IOException e) {
                 throw new RuntimeException(e);
-            }finally {
+            } finally {
                 try {
                     out.close();
                 } catch (IOException e) {

@@ -15,7 +15,8 @@ import java.io.Serializable;
 @AllArgsConstructor
 @SuperBuilder
 public class Notification extends AbstractEntity implements Serializable {
-    private String userId;
+    private String receiverId;
     private NotificationMessage message;
     private boolean read;
+    private String senderId;
 }

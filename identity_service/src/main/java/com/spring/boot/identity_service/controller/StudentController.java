@@ -47,7 +47,7 @@ public class StudentController {
 
     @GetMapping(value = "/inactive", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public APIResponse<?> getAllStudentsByStatus(@RequestParam(defaultValue = DEFAULT_SEARCH) String search,
+    public APIResponse<?> getAllInActiveStudents(@RequestParam(defaultValue = DEFAULT_SEARCH) String search,
                                                  @RequestParam(defaultValue = DEFAULT_PAGE) int page,
                                                  @RequestParam(defaultValue = DEFAULT_COLUMN_STUDENT) String column,
                                                  @RequestParam(defaultValue = DEFAULT_SIZE) int size,
@@ -66,5 +66,11 @@ public class StudentController {
             @RequestParam(defaultValue = DEFAULT_SORT_INCREASE) String sortType
     ) {
         return userService.getAllVerifiedStudents(search, page, column, size, sortType);
+    }
+
+    @GetMapping(value = "/all_id", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    public APIResponse<?> getAllStudentId() {
+        return userService.getAllStudentId();
     }
 }

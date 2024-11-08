@@ -105,7 +105,7 @@ public class ValidateUpdateQuestionImpl implements ConstraintValidator<ValidateU
 
     private boolean validateContent(UpdateQuestionDTO value, ConstraintValidatorContext context) {
         if (Objects.nonNull(value.getContent()) && value.getContent().isBlank()) {
-            context.buildConstraintViolationWithTemplate(ErrorMessage.QUESTION_CREATE_ANSWER_CONTENT_REQUIRED.name())
+            context.buildConstraintViolationWithTemplate(ErrorMessage.CONTENT_REQUIRED.name())
                     .addPropertyNode(CONTENT)
                     .addConstraintViolation();
             return Boolean.FALSE;

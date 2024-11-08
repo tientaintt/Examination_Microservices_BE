@@ -26,9 +26,10 @@ public enum ErrorCode {
     VERIFY_EMAIL_VERIFIED_BY_ANOTHER_USER(1013,"Email address has been verified by another user.",HttpStatus.BAD_REQUEST),
     VERIFY_NOT_ACCEPTABLE(1014,"Your verification code is not valid.",HttpStatus.NOT_ACCEPTABLE),
     VERIFY_INVALID_STATUS(1015,"User status is not enable to verify.",HttpStatus.BAD_REQUEST),
+
     FIREBASE_ERROR(1016,"Cannot access firebase database",HttpStatus.INTERNAL_SERVER_ERROR),
     FIREBASE_MESSAGING_ERROR(1017,"Cannot send message to firebase",HttpStatus.INTERNAL_SERVER_ERROR),
-
+    EMAIL_VERIFIED_ERROR(1018,"Your email is verified",HttpStatus.BAD_REQUEST),
     UNCATEGORIZED_EXCEPTION(9999,"Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR);
 
     ;

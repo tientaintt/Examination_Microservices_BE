@@ -6,5 +6,6 @@ import org.springframework.stereotype.Service;
 
 public interface ReportService {
     ApiResponse<?> reportTotal();
+    ApiResponse<?> reportTeacherTotal();
     ApiResponse<?> reportTestByMonthByUserId();
 }

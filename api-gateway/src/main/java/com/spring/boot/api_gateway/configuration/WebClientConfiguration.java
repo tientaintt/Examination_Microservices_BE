@@ -19,10 +19,10 @@ public class WebClientConfiguration {
     @Bean
     CorsWebFilter corsWebFilter(){
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("*"));
+        config.setAllowedOrigins(List.of("http://localhost:4200"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowedMethods(List.of("*"));
-
+        config.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource configurationSource=new UrlBasedCorsConfigurationSource();
         configurationSource.registerCorsConfiguration("/**",config);
 

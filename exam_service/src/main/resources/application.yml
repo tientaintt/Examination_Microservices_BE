@@ -32,3 +32,4 @@ app:
   services:
     identity: http://localhost:8080/identity
     file: http://localhost:8085/file
+    notification: http://localhost:8081/notify

@@ -16,14 +16,21 @@ public interface ScoreRepository extends JpaRepository<Score, Long> {
 
     Optional<Score> findByMultipleChoiceTestIdAndUserID(Long testId, String userId);
 
-    @Query("select new com.spring.boot.exam_service.dto.response.StudentScoreResponse( s.id,s.multipleChoiceTest.id, s.totalCore, s.createdDate, s.isLate, null, null, null, s.targetScore) " +
+    @Query("select new com.spring.boot.exam_service.dto.response.StudentScoreResponse( s.id,s.multipleChoiceTest.id, s.totalScore, s.createdDate, s.isLate, s.userID, null, null, s.targetScore) " +
             "FROM Score s " +
-            "where s.multipleChoiceTest.id = :testId and s.multipleChoiceTest.testName=:search")
+            "where s.multipleChoiceTest.id = :testId and (:search IS NULL OR :search = '' OR s.multipleChoiceTest.testName like :search)")
     Page<StudentScoreResponse> findAllScoreOfMultipleChoiceTest(Long testId, String search,Pageable pageable);
 
-    @Query("select new com.spring.boot.exam_service.dto.response.MyScoreResponse(s.id, s.totalCore, s.isLate, s.submittedDate, mc.id, mc.testName, c.id, c.subjectName, c.subjectCode, s.targetScore) " +
+    @Query("select new com.spring.boot.exam_service.dto.response.MyScoreResponse(s.id, s.totalScore, s.isLate, s.submittedDate, mc.id, mc.testName, c.id, c.subjectName, c.subjectCode, s.targetScore) " +
             "FROM Score s inner join MultipleChoiceTest mc on s.multipleChoiceTest.id = mc.id " +
             "inner join Subject c on mc.subject.id = c.id " +
-            "where mc.testName like :searchText and s.userID = :studentId and s.submittedDate > :dateFrom and s.submittedDate < :dateTo")
+            "where (:search IS NULL OR :search = '' OR  mc.testName like :searchText) and s.userID = :studentId and s.submittedDate > :dateFrom and s.submittedDate < :dateTo")
     Page<MyScoreResponse> findAllMyScores(String studentId, String searchText, Long dateFrom, Long dateTo , Pageable pageable);
+
+    @Query("select new com.spring.boot.exam_service.dto.response.MyScoreResponse(s.id, s.totalScore, s.isLate, s.submittedDate, mc.id, mc.testName, c.id, c.subjectName, c.subjectCode, s.targetScore) " +
+            "FROM Score s inner join MultipleChoiceTest mc on s.multipleChoiceTest.id = mc.id " +
+            "inner join Subject c on mc.subject.id = c.id " +
+            "where s.id=:scoreId ")
+    MyScoreResponse findMyScoreResponseById(Long scoreId);
+
 }

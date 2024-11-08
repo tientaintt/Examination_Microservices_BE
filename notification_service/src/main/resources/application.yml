@@ -13,7 +13,7 @@ config:
   mail:
     host: smtp.gmail.com
     port: 587
-#    username: phancongtu25032002@gmail.com
+#    username: phancongtu25032002@gmail.comd
 #    password: udvepsndgybmyzye
     username: nguyentientaigoboi@gmail.com
     password: njqzumbjjxgqphec

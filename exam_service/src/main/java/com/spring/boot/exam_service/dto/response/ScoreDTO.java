@@ -10,13 +10,13 @@ import java.util.List;
 @Setter
 @Getter
 @Builder
-public class ScoreResponse {
+public class ScoreDTO {
     private Long id;
     private Double totalScore;
     private Double targetScore;
     private Long SubmittedDate;
     private Boolean isLate;
     private MultipleChoiceTestResponse multipleChoiceTest;
-//    private List<SubmittedQuestionResponse> submittedQuestions;
-private Page<SubmittedQuestionResponse> submittedQuestions;
+
+    private List<SubmittedQuestionResponse> submittedQuestions;
 }

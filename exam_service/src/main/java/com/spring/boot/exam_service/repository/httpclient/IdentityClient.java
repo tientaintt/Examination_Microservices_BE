@@ -11,31 +11,33 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 
-@FeignClient(name="identity-service",url = "${app.services.identity}", configuration = {AuthenticationRequestInterceptor.class})
+@FeignClient(name = "identity-service", url = "${app.services.identity}", configuration = {AuthenticationRequestInterceptor.class})
 public interface IdentityClient {
 
-    @GetMapping(value = "/user/userIdAndStatus",produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/user/userIdAndStatus", produces = MediaType.APPLICATION_JSON_VALUE)
     ApiResponse<UserRequest> getUserVerifiedAndStatus(
             @RequestParam String userId, @RequestParam boolean status
     );
-    @GetMapping(value = "/user/email/check",produces = MediaType.APPLICATION_JSON_VALUE)
-    ApiResponse<?> checkEmailVerified(
-            @RequestParam String email) ;
 
-    @PutMapping(value = "/user/reverification",produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/user/email/check", produces = MediaType.APPLICATION_JSON_VALUE)
+    ApiResponse<?> checkEmailVerified(
+            @RequestParam String email);
+
+    @PutMapping(value = "/user/reverification", produces = MediaType.APPLICATION_JSON_VALUE)
     ApiResponse<?> updateVerifyCode(
             @RequestParam String userId,
-            @RequestParam String verifyCode) ;
+            @RequestParam String verifyCode);
 
-    @PutMapping(value = "/user/updatepasswordverifycode",produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/user/updatepasswordverifycode", produces = MediaType.APPLICATION_JSON_VALUE)
     ApiResponse<?> updateVerifyPasswordCode(
             @RequestParam String userId,
-            @RequestParam String verifyCode) ;
+            @RequestParam String verifyCode);
 
-    @GetMapping(value = "/user/my-info",produces = MediaType.APPLICATION_JSON_VALUE)
-    ApiResponse<UserRequest> getCurrentUserLogin() ;
+    @GetMapping(value = "/user/my-info", produces = MediaType.APPLICATION_JSON_VALUE)
+    ApiResponse<UserRequest> getCurrentUserLogin();
+
     //In Feign Client, request with @RequestBody is a POST method, so annotation @GetMapping will be ignored
-    @GetMapping(value = "/users",produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/users", produces = MediaType.APPLICATION_JSON_VALUE)
     ApiResponse<Page<UserRequest>> getAllUsersByUserIds(@RequestBody UserIdsDTO userIdsRequest,
                                                         @RequestParam int page,
                                                         @RequestParam String column,
@@ -44,6 +46,10 @@ public interface IdentityClient {
                                                         @RequestParam String search);
 
     @GetMapping(value = "/student/total", produces = MediaType.APPLICATION_JSON_VALUE)
-   ApiResponse<?> getAllTotalStudents();
+    ApiResponse<?> getAllTotalStudents();
+
+    @GetMapping(value = "/student/all_id", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    ApiResponse<?> getAllStudentId();
 }
 

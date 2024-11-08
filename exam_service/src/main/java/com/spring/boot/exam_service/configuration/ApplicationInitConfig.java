@@ -40,6 +40,9 @@ public class ApplicationInitConfig {
             if(questionTypeRepository.findByTypeQuestion("Fill in the blank").isEmpty()){
                 questionTypeRepository.save(QuestionType.builder().typeQuestion("Fill in the blank").build());
             }
+            if(questionTypeRepository.findByTypeQuestion("True/False").isEmpty()){
+                questionTypeRepository.save(QuestionType.builder().typeQuestion("True/False").build());
+            }
         };
     }
 }

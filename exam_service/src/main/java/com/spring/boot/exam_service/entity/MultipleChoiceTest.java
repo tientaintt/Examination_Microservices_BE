@@ -13,7 +13,7 @@ import java.util.List;
 @Entity
 @Builder
 @Table(name = "multiple_choice_test")
-public class MultipleChoiceTest extends AbstractAuditingEntity {
+public class  MultipleChoiceTest extends AbstractAuditingEntity {
     private static final long serialVersionUID = 1L;
     private static final String TEST_ID = "id";
     private static final String TEST_NAME = "test_name";

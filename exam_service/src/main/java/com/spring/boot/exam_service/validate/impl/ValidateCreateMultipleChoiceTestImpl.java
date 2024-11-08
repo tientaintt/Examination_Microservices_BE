@@ -95,6 +95,7 @@ public class ValidateCreateMultipleChoiceTestImpl implements ConstraintValidator
     }
 
     private boolean validateQuestionResource(CreateMultipleChoiceTestDTO value, ConstraintValidatorContext context) {
+        log.info(value.getRandomQuestions().getFirst().getNumberOfQuestion().toString());
         if((Objects.isNull(value.getQuestionIds()) && Objects.isNull(value.getRandomQuestions()))
             || (Objects.nonNull(value.getQuestionIds()) && Objects.nonNull(value.getRandomQuestions()))) {
             context.buildConstraintViolationWithTemplate(ErrorMessage.MULTIPLE_CHOICE_TEST_QUESTION_SOURCE_INVALID.name())

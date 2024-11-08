@@ -22,7 +22,7 @@ public interface UserRepository extends JpaRepository< User,String> {
     @Query(value = "SELECT * FROM user where email_address = :emailAddress and is_email_address_verified = true",
             nativeQuery = true)
     Optional<User> findOneByEmailAddressVerified(String emailAddress);
-    @Query(value = "SELECT * FROM user u WHERE u.id IN :ids AND (u.display_name like %:search% OR u.email_address like %:search%)",nativeQuery = true)
+    @Query(value = "SELECT * FROM user u WHERE (:ids IS NULL OR u.id IN :ids) AND (u.display_name like %:search% OR u.email_address like %:search%)",nativeQuery = true)
     Page<User> findAllByIdIn(List<String> ids,String search, Pageable pageable);
 
     Optional<User> findOneByUsernameOrEmailAddressAndIsEmailAddressVerified(String loginName, String emailAddress, Boolean isEmailAddressVerified);

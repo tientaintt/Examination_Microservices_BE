@@ -170,7 +170,7 @@ public class MailServiceImpl implements MailService {
             // start send mail
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(emails));
             message.setFrom(new InternetAddress(email));
-            message.setSubject("[ONLINE EXAM PLATFORM] Your classroom has a new exam!");
+            message.setSubject("[ONLINE EXAM PLATFORM] Your subject has a new exam!");
             message.setContent(
                     thymeleafService.getTestCreatedNotificationMailContent
                             (classroomName, testName, startDate, testingTime), CONTENT_TYPE_TEXT_HTML);
@@ -202,7 +202,7 @@ public class MailServiceImpl implements MailService {
 
         // If email address has been verified without value of new_email_address column
         if (Objects.isNull(userRequest.getNewEmailAddress()) && userRequest.getIsEmailAddressVerified()) {
-            throw new AppException(ErrorCode.VERIFY_INVALID_STATUS);
+            throw new AppException(ErrorCode.EMAIL_VERIFIED_ERROR);
         }
 
         // If new email address is not null, make sure that this email has not been verified by another user

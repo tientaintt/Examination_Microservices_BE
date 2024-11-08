@@ -17,6 +17,7 @@ import com.spring.boot.identity_service.exception.RefreshTokenNotFoundException;
 import com.spring.boot.identity_service.mapper.UserMapper;
 import com.spring.boot.identity_service.repository.RoleRepository;
 import com.spring.boot.identity_service.repository.StudentRepositoryRead;
+import com.spring.boot.identity_service.repository.TeacherRepository;
 import com.spring.boot.identity_service.repository.UserRepository;
 import com.spring.boot.identity_service.service.AuthenticationService;
 import com.spring.boot.identity_service.service.FileService;
@@ -32,6 +33,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -64,6 +66,7 @@ public class UserServiceImpl implements UserService {
     WebUtils webUtils;
     StudentRepositoryRead studentRepositoryRead;
     FileService fileService;
+    private final TeacherRepository teacherRepository;
 
     @Override
     @Transactional
@@ -77,8 +80,6 @@ public class UserServiceImpl implements UserService {
         // save user information to database
         newUserProfile.setDisplayName(userCreationRequest.getDisplayName());
         newUserProfile.setEmailAddress(userCreationRequest.getEmailAddress());
-//        newUserProfile.setHashPassword(passwordEncoder.encode(signupVM.getPassword()));
-//        newUserProfile.setLoginName(signupVM.getLoginName());
         newUserProfile.setIsEmailAddressVerified(false);
         newUserProfile.setIsEnable(true);
         HashSet<Role> roles = new HashSet<>();
@@ -92,8 +93,8 @@ public class UserServiceImpl implements UserService {
         }
 
         newUserProfile.setRoles(roles);
-        newUserProfile = userRepository.save(newUserProfile);
-
+      //  newUserProfile = userRepository.save(newUserProfile);
+        newUserProfile=addStudent(newUserProfile);
         // create response information to user
         AuthenticationResponse tokenDetails = authenticationService.authenticate(
                 new AuthenticationRequest(newUserProfile.getUsername(), userCreationRequest.getPassword())
@@ -210,7 +211,8 @@ public class UserServiceImpl implements UserService {
         );
         user.setVerificationCode(verifyCode);
         user.setVerificationExpiredCodeTime(Instant.now().plusSeconds(verificationCodeTime * 60));
-        userRepository.save(user);
+        //userRepository.save(user);
+        updateStudent(user);
         return APIResponse.builder()
                 .data(user)
                 .build();
@@ -224,7 +226,8 @@ public class UserServiceImpl implements UserService {
         );
         user.setResetPasswordCode(verifyCode);
         user.setResetPasswordExpiredCodeTime(Instant.now().plusSeconds(resetPasswordCodeTime * 60));
-        userRepository.save(user);
+       // userRepository.save(user);
+        updateStudent(user);
         return APIResponse.builder()
                 .data(userMapper.toUserResponse(user))
                 .build();
@@ -238,8 +241,10 @@ public class UserServiceImpl implements UserService {
             userProfile.setEmailAddress(userProfile.getNewEmailAddress());
         }
         userProfile.setNewEmailAddress(null);
-        userRepository.save(userProfile);
+//        userRepository.save(userProfile);
+        updateStudent(userProfile);
     }
+
 
     @Override
     public APIResponse<?> verifyEmail(String userID, VerificationEmailRequest verificationEmailDTO) {
@@ -279,12 +284,7 @@ public class UserServiceImpl implements UserService {
             log.info("End verify email by verification code");
             return new APIResponse<>();
         } else {
-//            LinkedHashMap<String, String> response = new LinkedHashMap<>();
-//            response.put(Constants.ERROR_CODE_KEY, ErrorMessage.VERIFY_NOT_ACCEPTABLE.getErrorCode());
-//            response.put(Constants.MESSAGE_KEY, ErrorMessage.VERIFY_NOT_ACCEPTABLE.getMessage());
-//            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE)
-//                    .contentType(MediaType.APPLICATION_JSON)
-//                    .body(response);
+
             throw new AppException(ErrorCode.VERIFY_NOT_ACCEPTABLE);
         }
     }
@@ -302,7 +302,8 @@ public class UserServiceImpl implements UserService {
         userProfile.setResetPasswordExpiredCodeTime(null);
         userProfile.setUpdateBy(userProfile.getUsername());
         userProfile.setUpdateDate(Instant.now());
-        userRepository.save(userProfile);
+        //userRepository.save(userProfile);
+        updateStudent(userProfile);
     }
 
     @Override
@@ -347,7 +348,8 @@ public class UserServiceImpl implements UserService {
         userProfile.setPassword(passwordEncoder.encode(changePassword.getNewPassword()));
         userProfile.setUpdateBy(userProfile.getUsername());
         userProfile.setUpdateDate(Instant.now());
-        userRepository.save(userProfile);
+//        userRepository.save(userProfile);
+        updateStudent(userProfile);
         // Delete old refresh token
         refreshTokenService.deleteByUserProfile(userProfile);
         // Add new refresh token
@@ -381,7 +383,8 @@ public class UserServiceImpl implements UserService {
         // Update display name
         if (StringUtils.isNoneBlank(dto.getDisplayName())) {
             userProfile.setDisplayName(dto.getDisplayName());
-            userRepository.save(userProfile);
+            //userRepository.save(userProfile);
+            updateStudent(userProfile);
         }
         // Update email address.
         if (StringUtils.isNoneBlank(dto.getEmailAddress())) {
@@ -399,7 +402,8 @@ public class UserServiceImpl implements UserService {
             }
             userProfile.setUpdateBy(userProfile.getUsername());
             userProfile.setUpdateDate(Instant.now());
-            userRepository.save(userProfile);
+//            userRepository.save(userProfile);
+            addStudent(userProfile);
 //            mailService.sendVerificationEmail(userProfile.getLoginName());
         }
         return APIResponse.builder().build();
@@ -419,6 +423,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public APIResponse<?> getAllTeachersByStatus(String search, int page, String column, int size, String sortType, boolean isActive) {
+        log.info("Start get all teacher searched by display name and email");
+        Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
+        String searchText = "%" + search.trim() + "%";
+        Page<User> listTeachers = teacherRepository
+                .findAllSearchedTeachersByStatus(searchText, isActive, pageable);
+        Page<UserResponse> response = listTeachers.map(userMapper::toUserResponse);
+
+        return APIResponse.builder()
+                .data(response).build();
+    }
+
+    @Override
     public APIResponse<?> getAllVerifiedStudents(String search, int page, String column, int size, String sortType) {
         log.info("Get all verified student: start");
         Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
@@ -427,6 +444,19 @@ public class UserServiceImpl implements UserService {
         Page<UserResponse> response = listStudents
                 .map(userMapper::toUserResponse);
         log.info("Get all verified student: end");
+        return APIResponse.builder()
+                .data(response).build();
+    }
+
+    @Override
+    public APIResponse<?> getAllVerifiedTeachers(String search, int page, String column, int size, String sortType) {
+        log.info("Get all verified teacher: start");
+        Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
+        String searchText = "%" + search.trim() + "%";
+        Page<User> listStudents = teacherRepository.findAllVerifiedTeachers(searchText, pageable);
+        Page<UserResponse> response = listStudents
+                .map(userMapper::toUserResponse);
+        log.info("Get all verified teacher: end");
         return APIResponse.builder()
                 .data(response).build();
     }
@@ -479,14 +509,38 @@ public class UserServiceImpl implements UserService {
 
 
         }
-        userRepository.delete(targetUser.get());
+       // userRepository.delete(targetUser.get());
+        deleteStudent(targetUser.get());
         log.warn(String.format("Delete user: User with id %s has been deleted by admin with id %s ", userId, userProfile.getId()));
         log.warn("Delete user: end");
         return APIResponse.builder()
                 .message("Deleted user")
                 .build();
     }
+    @CacheEvict(value = "userIds", allEntries = true)
+    public User updateStudent(User user) {
+        // Logic cập nhật thông tin sinh viên
+       return studentRepositoryRead.save(user);
+    }
 
+    @CacheEvict(value = "userIds", allEntries = true)
+    public User addStudent(User user) {
+        return studentRepositoryRead.save(user);
+    }
+
+    @CacheEvict(value = "userIds", allEntries = true)
+    public void deleteStudent(User user) {
+        studentRepositoryRead.delete(user);
+    }
+    @Override
+    public APIResponse<?> getAllStudentId() {
+        List<String> userIds=getAllStudentIds();
+        return APIResponse.builder().data(userIds).build();
+    }
+    @CacheEvict(value = "userIds")
+    public List<String> getAllStudentIds() {
+        return studentRepositoryRead.findAllStudentId();
+    }
     @Override
     public APIResponse<?> getAllUserByListId(List<String> userIds, int page, String column, int size, String sortType,String search) {
         log.info("{} {} {} {}", page, column, size, sortType);

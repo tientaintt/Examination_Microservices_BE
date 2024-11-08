@@ -21,9 +21,14 @@ public class ReportController {
     private final ReportService reportService;
 
     @GetMapping(value = "/total",produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ApiResponse<?>  reportTotal(){
         return reportService.reportTotal();
+    }
+    @GetMapping(value = "/teacher/total",produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    public ApiResponse<?>  reportTeacherTotal(){
+        return reportService.reportTeacherTotal();
     }
 
     @GetMapping(value = "/testByMonth",produces = MediaType.APPLICATION_JSON_VALUE)

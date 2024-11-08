@@ -29,21 +29,6 @@ public class Question extends AbstractAuditingEntity {
     @Column(name = CONTENT)
     private String content;
 
-//    @Column(name = FIRST_ANSWER)
-//    private String firstAnswer;
-//
-//    @Column(name = SECOND_ANSWER)
-//    private String secondAnswer;
-//
-//    @Column(name = THIRD_ANSWER)
-//    private String thirdAnswer;
-//
-//    @Column(name = FOURTH_ANSWER)
-//    private String fourthAnswer;
-//
-//    @Column(name = CORRECT_ANSWER)
-//    private String correctAnswer;
-
     @ManyToOne(fetch = FetchType.LAZY)
     private QuestionGroup questionGroup;
 

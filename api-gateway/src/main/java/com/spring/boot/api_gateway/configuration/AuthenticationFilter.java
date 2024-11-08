@@ -42,8 +42,10 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             "/identity/refresh_token",
             "/identity/users/user/update",
             "/identity/password/reset/.*",
-"/exam/subject",
-"/exam/subject/.*",
+            "/exam/subject",
+            "/exam/subject/.*",
+            "/notify/ws/.*",
+            "/notify/ws",
             "/notify/password/.*",
             "/identity/users"};
 
@@ -52,14 +54,14 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     private String apiPrefix;
 
     private boolean isPublicEndpoint(ServerHttpRequest request) {
-        return Arrays.stream(publicEndpoint).anyMatch(s -> request.getURI().getPath().matches(apiPrefix+s));
+        return Arrays.stream(publicEndpoint).anyMatch(s -> request.getURI().getPath().matches(apiPrefix + s));
     }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         log.info("AuthenticationFilter");
         log.info(exchange.getRequest().getURI().getPath());
-        if(isPublicEndpoint(exchange.getRequest())) {
+        if (isPublicEndpoint(exchange.getRequest())) {
             log.info("Public");
             return chain.filter(exchange);
         }
@@ -81,10 +83,10 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             } else {
                 return unauthenticated(exchange.getResponse());
             }
-        }).onErrorResume(throwable ->{
-                log.error(throwable.getMessage());
-                return unauthenticated(exchange.getResponse());
-        }
+        }).onErrorResume(throwable -> {
+                    log.error(throwable.getMessage());
+                    return unauthenticated(exchange.getResponse());
+                }
         );
 
 

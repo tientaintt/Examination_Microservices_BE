@@ -37,10 +37,18 @@ public class MultipleChoiceTestController {
     @GetMapping(value = "/{testId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN', 'STUDENT')")
     public ApiResponse<?> getMultipleChoiceTest(
-            @PathVariable(name = "testId") Long testId){
+            @PathVariable(name = "testId") Long testId,
+            @RequestParam(defaultValue = DEFAULT_PAGE) int page,
+            @RequestParam(defaultValue = DEFAULT_COLUMN) String column,
+            @RequestParam(defaultValue = DEFAULT_SIZE) int size,
+            @RequestParam(defaultValue = DEFAULT_SORT_INCREASE) String sortType){
         return multipleChoiceTestService.
-                getMultipleChoiceTest(testId);
+                getMultipleChoiceTest(testId, page, column, size, sortType);
     }
+
+
+
+
     @GetMapping(value = "/my/info/{testId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('STUDENT')")
     public ApiResponse<?> getInfoMyMultipleChoiceTest(
@@ -71,6 +79,29 @@ public class MultipleChoiceTestController {
                                                                      @RequestParam(defaultValue = DEFAULT_SORT_INCREASE) String sortType){
         return multipleChoiceTestService.
                 getMyMultipleChoiceTestsOf2WeeksAround(search, page, column, size, sortType);
+    }
+
+    @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
+    @GetMapping(value = "/two-weeks-around", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ApiResponse<?> getTeacherMultipleChoiceTestsOf2WeeksAround( @RequestParam(defaultValue = DEFAULT_SEARCH) String search,
+                                                                  @RequestParam(defaultValue = DEFAULT_PAGE) int page,
+                                                                  @RequestParam(defaultValue = DEFAULT_COLUMN) String column,
+                                                                  @RequestParam(defaultValue = DEFAULT_SIZE) int size,
+                                                                  @RequestParam(defaultValue = DEFAULT_SORT_INCREASE) String sortType){
+        return multipleChoiceTestService.
+                getTeacherMultipleChoiceTestsOf2WeeksAround(search, page, column, size, sortType);
+    }
+    @PreAuthorize("hasAnyRole('TEACHER','ADMIN')")
+    @GetMapping(value = "/manage", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ApiResponse<?> getAllMultipleChoiceTestsManagement( @RequestParam Long startOfDate,
+                                                               @RequestParam(required = false) Long endOfDate,
+                                                               @RequestParam(defaultValue = DEFAULT_SEARCH) String search,
+                                                                       @RequestParam(defaultValue = DEFAULT_PAGE) int page,
+                                                                       @RequestParam(defaultValue = DEFAULT_COLUMN) String column,
+                                                                       @RequestParam(defaultValue = DEFAULT_SIZE) int size,
+                                                                       @RequestParam(defaultValue = DEFAULT_SORT_INCREASE) String sortType){
+        return multipleChoiceTestService.
+                getAllMultipleChoiceTestsManagement(search, page, column, size, sortType,startOfDate,endOfDate);
     }
     @PreAuthorize("hasRole('STUDENT')")
     @GetMapping(value = "/me/specific-day", produces = MediaType.APPLICATION_JSON_VALUE)

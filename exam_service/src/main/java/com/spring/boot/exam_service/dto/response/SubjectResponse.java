@@ -15,8 +15,9 @@ public class SubjectResponse {
     private Boolean isPrivate;
     private String description;
     private Long numberOfStudents;
+    private Long numberOfExams;
 
-    public SubjectResponse(Long id, String subjectName, String subjectCode, Boolean isEnable, Boolean isPrivate, String description, Long numberOfStudents) {
+    public SubjectResponse(Long id, String subjectName, String subjectCode, Boolean isEnable, Boolean isPrivate, String description, Long numberOfStudents,Long numberOfExams) {
         this.id = id;
         this.subjectName = subjectName;
         this.subjectCode = subjectCode;
@@ -24,5 +25,6 @@ public class SubjectResponse {
         this.isPrivate = isPrivate;
         this.description = description;
         this.numberOfStudents = numberOfStudents;
+        this.numberOfExams = numberOfExams;
     }
 }

@@ -10,8 +10,10 @@ import com.spring.boot.exam_service.service.ScoreService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -51,17 +53,32 @@ public class ScoreController {
             @RequestParam(defaultValue = DEFAULT_SORT_INCREASE) String sortType){
         return scoreService.getAllStudentScoreOfTest(testId, search, page, column, size, sortType);
     }
+    @GetMapping(value = "/export/{scoreId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    public ResponseEntity<InputStreamResource>  exportPDFScoreById(@PathVariable(name = "scoreId") Long scoreId){
+
+        return scoreService.exportPDFScoreById(scoreId);
+    }
+
 
     @PostMapping(value = "/student", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ApiResponse<?> getScoreOfStudent(@Valid @RequestBody GetScoreOfStudentDTO dto){
-        return scoreService.getScoreOfStudent(dto.getStudentId(), dto.getMultipleChoiceTestId());
+    public ApiResponse<?> getScoreOfStudent(@Valid @RequestBody GetScoreOfStudentDTO dto,
+                                            @RequestParam(defaultValue = DEFAULT_PAGE) int page,
+                                            @RequestParam(defaultValue = DEFAULT_COLUMN) String column,
+                                            @RequestParam(defaultValue = DEFAULT_SIZE) int size,
+                                            @RequestParam(defaultValue = DEFAULT_SORT_INCREASE) String sortType){
+        return scoreService.getScoreOfStudent(dto.getStudentId(), dto.getMultipleChoiceTestId(),page,column,size,sortType);
     }
     @GetMapping(value = "/my/{testId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('STUDENT')")
-    public ApiResponse<?> getMyScoreOfTest(@PathVariable Long testId){
+    public ApiResponse<?> getMyScoreOfTest(@PathVariable Long testId,
+                                           @RequestParam(defaultValue = DEFAULT_PAGE) int page,
+                                           @RequestParam(defaultValue = DEFAULT_COLUMN) String column,
+                                           @RequestParam(defaultValue = DEFAULT_SIZE) int size,
+                                           @RequestParam(defaultValue = DEFAULT_SORT_INCREASE) String sortType){
         UserRequest userProfile = identityService.getCurrentUser();
-        return scoreService.getScoreOfStudent(userProfile.getId(), testId);
+        return scoreService.getScoreOfStudent(userProfile.getId(), testId,page,column,size,sortType);
     }
     @GetMapping(value = "/my", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('STUDENT')")

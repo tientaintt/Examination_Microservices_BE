@@ -23,9 +23,16 @@ spring:
             - Path=${app.app-prefix}/notify/**
           filters:
             - StripPrefix=2
+
         - id: exam_service
           uri: http://localhost:8082
           predicates:
             - Path=${app.app-prefix}/exam/**
+          filters:
+            - StripPrefix=2
+        - id: file_service
+          uri: http://localhost:8085
+          predicates:
+            - Path=${app.app-prefix}/file/**
           filters:
             - StripPrefix=2

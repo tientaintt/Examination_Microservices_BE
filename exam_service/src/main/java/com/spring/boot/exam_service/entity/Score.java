@@ -26,7 +26,7 @@ public class Score extends AbstractAuditingEntity {
     private Long id;
 
     @Column(name = TOTAL_SCORE)
-    private double totalCore;
+    private double totalScore;
 
     @Column(name = TOTAL_CORRECT)
     private Long totalCorrect;

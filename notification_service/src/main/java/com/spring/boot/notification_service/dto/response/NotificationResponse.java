@@ -14,7 +14,8 @@ import java.util.Date;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class NotificationResponse {
         private String id;
-
+        private String receiverId;
+        private String senderId;
         private NotificationMessage message;
         private boolean read;
         private Date createdAt ;

@@ -48,6 +48,11 @@ public enum ErrorCode {
     NO_STUDENT_IN_CLASS(1035,"There are no students in this class yet.",HttpStatus.NOT_FOUND),
     CANNOT_READ_FILE(1036,"Cannot read file",HttpStatus.BAD_REQUEST),
     CANNOT_WRITE_FILE(1037,"Cannot write file",HttpStatus.BAD_REQUEST),
+    NO_ANSWER_FOUND(1038,"No answers provided for the question.",HttpStatus.NOT_FOUND),
+    NO_CORRECT_ANSWER_FOUND(1039,"No correct answer provided for the question.",HttpStatus.NOT_FOUND),
+    QUESTION_CONTENT_NOT_FOUND_ERROR(1040,"Question content not found",HttpStatus.NOT_FOUND),
+    DATA_IMPORT_ERROR(1041,"Data import error",HttpStatus.NOT_FOUND),
+    STUDENT_IDS_ERROR(1042,"List data student id is correct",HttpStatus.NOT_FOUND),
     UNCATEGORIZED_EXCEPTION(9999,"Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR);
 
 

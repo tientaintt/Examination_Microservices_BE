@@ -38,13 +38,13 @@ public class ValidateAddToSubjectImpl implements ConstraintValidator<ValidateAdd
 
     private boolean validateStudentId(AddToSubjectDTO value, ConstraintValidatorContext context) {
         log.info("Start check student id");
-//        log.info(identityService.getUserVerifiedByIdAndStatus(value.getStudentId().toString(), true).toString());
-//        if(identityService.getUserVerifiedByIdAndStatus(value.getStudentId(), true)==null){
-//            context.buildConstraintViolationWithTemplate(ErrorMessage.STUDENT_NOT_FOUND.name())
-//                    .addPropertyNode(STUDENT_ID)
-//                    .addConstraintViolation();
-//            return Boolean.FALSE;
-//        }
+        log.info(identityService.getUserVerifiedByIdAndStatus(value.getStudentId().toString(), true).toString());
+        if(identityService.getUserVerifiedByIdAndStatus(value.getStudentId(), true)==null){
+            context.buildConstraintViolationWithTemplate(ErrorMessage.STUDENT_NOT_FOUND.name())
+                    .addPropertyNode(STUDENT_ID)
+                    .addConstraintViolation();
+            return Boolean.FALSE;
+        }
         log.info("End check student id");
         return Boolean.TRUE;
     }

@@ -17,9 +17,12 @@ public interface MultipleChoiceTestService {
 
     ApiResponse<?> getMyMultipleChoiceTests(boolean isEnded, String search, int page, String column, int size, String sortType);
 
-    ApiResponse<?> getMultipleChoiceTest(Long testId);
+    ApiResponse<?> getMultipleChoiceTest(Long testId,int page, String column, int size, String sortType);
 
     ApiResponse<?> getMyMultipleChoiceTestsOf2WeeksAround(String search, int page, String column, int size, String sortType);
+    ApiResponse<?> getTeacherMultipleChoiceTestsOf2WeeksAround(String search, int page, String column, int size, String sortType);
+    ApiResponse<?>  getAllMultipleChoiceTestsManagement(String search, int page, String column, int size, String sortType, Long startOfDate,Long endOfDate);
+
     ApiResponse<?> getMyMultipleChoiceTestsNext2Weeks(String search, int page, String column, int size, String sortType);
 
     ApiResponse<?> getMyMultipleChoiceTestsToday(Long startOfDate,Long endOfDate, String search, int page, String column, int size, String sortType);

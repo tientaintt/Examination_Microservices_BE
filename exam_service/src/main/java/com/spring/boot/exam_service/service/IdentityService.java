@@ -38,6 +38,12 @@ public class IdentityService {
     public int getTotalStudents(){
         int total= (int) identityClient.getAllTotalStudents().getData();
         return total;
+
+    }
+
+    public List<String> getAllStudentId(){
+        List<String> studentIds= (List<String>) identityClient.getAllStudentId().getData();
+        return studentIds;
     }
 
 }

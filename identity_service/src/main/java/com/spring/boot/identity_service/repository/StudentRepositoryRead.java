@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -16,6 +17,7 @@ public interface StudentRepositoryRead extends JpaRepository<User, String> {
             "\twhere u.is_enable = :isActive and u.id in (\n" +
             "    select user_id from user_roles ur\n" +
             "\t\twhere ur.user_id = :userId and is_email_address_verified=true and ur.roles_name = \"STUDENT\"\n" +
+            "and ur.roles_name <> \"TEACHER\" "+
             "    )",
             nativeQuery = true)
     Optional<User> findVerifiedStudentByIdAndStatus(String userId, Boolean isActive);
@@ -26,6 +28,7 @@ public interface StudentRepositoryRead extends JpaRepository<User, String> {
             "\t\tand u.id in (\n" +
             "\t\tselect user_id from user_roles ur\n" +
             "\t\t\twhere ur.roles_name like \"STUDENT\"\n" +
+            "and ur.roles_name <> \"TEACHER\" "+
             "\t\t)",
             nativeQuery = true)
     Page<User> findAllSearchedStudentsByStatus(String searchText, Boolean isActive, Pageable pageable);
@@ -34,9 +37,14 @@ public interface StudentRepositoryRead extends JpaRepository<User, String> {
             "where u.is_email_address_verified = true " +
             "and u.is_enable = true " +
             "and ur.roles_name like \"STUDENT\" \n" +
+            "and ur.roles_name <> \"TEACHER\" " +
             "and (u.display_name like :searchText or u.email_address like :searchText)",
             nativeQuery = true)
     Page<User> findAllVerifiedStudents(String searchText, Pageable pageable);
-
-
+@Query(value = "SELECT u.id FROM user u left join user_roles ur on u.id = ur.user_id " +
+        "where u.is_email_address_verified = true " +
+                "and u.is_enable = true " +
+                "and ur.roles_name like \"STUDENT\" " +
+                "and ur.roles_name <> \"TEACHER\" ",nativeQuery = true)
+    List<String>findAllStudentId();
 }
