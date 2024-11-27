@@ -18,6 +18,7 @@ public class UserRequest {
     String newEmailAddress;
     Boolean isEmailAddressVerified;
     Boolean isEnable;
+    String imageUrl;
     List<String> roles;
 }
 

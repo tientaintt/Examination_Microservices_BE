@@ -95,7 +95,6 @@ public class ValidateCreateMultipleChoiceTestImpl implements ConstraintValidator
     }
 
     private boolean validateQuestionResource(CreateMultipleChoiceTestDTO value, ConstraintValidatorContext context) {
-        log.info(value.getRandomQuestions().getFirst().getNumberOfQuestion().toString());
         if((Objects.isNull(value.getQuestionIds()) && Objects.isNull(value.getRandomQuestions()))
             || (Objects.nonNull(value.getQuestionIds()) && Objects.nonNull(value.getRandomQuestions()))) {
             context.buildConstraintViolationWithTemplate(ErrorMessage.MULTIPLE_CHOICE_TEST_QUESTION_SOURCE_INVALID.name())
@@ -142,6 +141,8 @@ public class ValidateCreateMultipleChoiceTestImpl implements ConstraintValidator
     }
 
     private boolean validateQuestionIds(CreateMultipleChoiceTestDTO value, ConstraintValidatorContext context){
+        log.info("Create multiple choice test: Validate questionIds: Start");
+
         if(Objects.nonNull(value.getQuestionIds())) {
             List<Long> questionIds = value.getQuestionIds();
             if (questionIds.size()==0) {
@@ -151,6 +152,7 @@ public class ValidateCreateMultipleChoiceTestImpl implements ConstraintValidator
                 return Boolean.FALSE;
             }
         }
+        log.info("Create multiple choice test: Validate questionIds: End");
         return Boolean.TRUE;
     }
 

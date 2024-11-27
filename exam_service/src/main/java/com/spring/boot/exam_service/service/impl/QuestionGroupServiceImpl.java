@@ -88,7 +88,7 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
 
     @Override
     public ApiResponse<?> getAllQuestionGroupOfClassroom(Long subjectId, String search, int page, String column, int size, String sortType, Boolean isEnable) {
-        log.info("Start get all Question Group of classroom");
+        log.info("Start get all Question Group of subject");
         Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
         Optional<Subject> classRoom = subjectRepository.findById(subjectId);
         if (classRoom.isEmpty()) {
@@ -104,7 +104,7 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
             Long totalQuestionInGr = questionRepository.countQuestionsByQuestionGroupId(groupID);
             group.setTotalQuestion(totalQuestionInGr);
         }
-        log.info("End get all Question Group of classroom");
+        log.info("End get all Question Group of subject");
         return ApiResponse.builder()
                 .data(response).build();
     }

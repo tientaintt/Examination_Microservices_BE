@@ -290,7 +290,7 @@ public class QuestionServiceImpl implements QuestionService {
             throw new AppException(ErrorCode.SUBJECT_NOT_FOUND);
         }
         Page<Question> questions = questionRepository
-                .getQuestionsOfClassroom(subjectId, searchText, isActiveQuestion, pageable);
+                .getQuestionsOfSubject(subjectId, searchText, isActiveQuestion, pageable);
         Page<QuestionResponse> response = questions.map(question ->
                 CustomBuilder.buildQuestionResponse(question, answerRepository.findListAnswerByIdQuestion(question.getId()))
         );

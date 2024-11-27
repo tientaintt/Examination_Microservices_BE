@@ -10,6 +10,7 @@ import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
 
 import java.util.Optional;
 @NoArgsConstructor(force = true)
@@ -24,12 +25,17 @@ public class AuditorAwareImpl implements AuditorAware<String> {
     }
     @Override
     public Optional<String> getCurrentAuditor() {
-        UserRequest currentUser= identityService.getCurrentUser();
+        // Kiểm tra xem có một yêu cầu HTTP hợp lệ không
+        if (RequestContextHolder.getRequestAttributes() != null) {
+            UserRequest currentUser = identityService.getCurrentUser();
 
-        if (currentUser == null) {
-            return Optional.of("ANONYMOUS_USER");
+            if (currentUser == null) {
+                return Optional.of("ANONYMOUS_USER");
+            }
+
+            return Optional.of(currentUser.getId());
         }
-
-        return Optional.of(currentUser.getId());
+        // Trả về một giá trị mặc định nếu không có yêu cầu HTTP
+        return Optional.of("ANONYMOUS_USER");
     }
 }

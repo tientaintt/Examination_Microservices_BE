@@ -11,11 +11,15 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.mongodb.config.EnableMongoAuditing;
+import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 
 import java.io.IOException;
 
 @SpringBootApplication
 @EnableFeignClients
+@EnableMongoRepositories
+@EnableMongoAuditing
 public class NotificationServiceApplication {
 
 	public static void main(String[] args) {

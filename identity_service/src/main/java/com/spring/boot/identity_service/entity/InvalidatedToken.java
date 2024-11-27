@@ -16,10 +16,8 @@ import java.util.Date;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-public class InvalidatedToken extends AbstractAuditingEntity {
+public class InvalidatedToken  {
     @Id
-    @Column(length = 36)
     String id;
-
     Date expiryTime;
 }

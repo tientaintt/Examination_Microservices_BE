@@ -1,16 +1,15 @@
 package com.spring.boot.notification_service.service;
 
 
-import com.spring.boot.notification_service.dto.request.MultipleChoiceTestRequest;
-import com.spring.boot.notification_service.dto.request.UserRequest;
+import com.spring.boot.notification_service.dto.request.TestNotification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 
 public interface MailService {
-    void sendTestCreatedNotificationEmail(Long subjectId, MultipleChoiceTestRequest multipleChoiceTest);
+    void sendTestCreatedNotificationEmail(Long subjectId, TestNotification multipleChoiceTest);
 
-    void sendTestDeletedNotificationEmail(MultipleChoiceTestRequest multipleChoiceTest);
-    void sendTestUpdatedNotificationEmail(MultipleChoiceTestRequest multipleChoiceTest);
+    void sendTestDeletedNotificationEmail(TestNotification multipleChoiceTest);
+    void sendTestUpdatedNotificationEmail(TestNotification multipleChoiceTest);
 
     @Async
     ResponseEntity<?> sendVerificationEmail();

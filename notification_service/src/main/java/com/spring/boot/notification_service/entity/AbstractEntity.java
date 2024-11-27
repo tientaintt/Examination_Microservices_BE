@@ -4,7 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.*;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
 
@@ -12,12 +13,17 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class AbstractEntity {
+@Document
+public abstract class AbstractEntity {
     @Id
     private String id;
+    @CreatedDate
     private Date createdAt = new Date();
+    @LastModifiedDate
     private Date updatedAt = new Date();
+    @CreatedBy
     private String createdBy;
+    @LastModifiedBy
     private String updatedBy;
     private Boolean isDeleted = false;
 }

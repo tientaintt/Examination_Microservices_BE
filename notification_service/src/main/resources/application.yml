@@ -8,7 +8,18 @@ spring:
     allow-bean-definition-overriding: true
   data:
     mongodb:
-      url: mongodb+srv://root:root@cluster0.1zgpkzb.mongodb.net/?retryWrites=true&w=majority/notification_service
+#      url: mongodb+srv://root:root@cluster0.1zgpkzb.mongodb.net/?retryWrites=true&w=majority/notification_service
+       uri:  mongodb+srv://root1:root@cluster0.4pjx8.mongodb.net/notify_service
+
+  kafka:
+    bootstrap-servers: localhost:9094
+    consumer:
+      group-id: notification-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
 config:
   mail:
     host: smtp.gmail.com

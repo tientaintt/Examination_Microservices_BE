@@ -1,6 +1,11 @@
 package com.spring.boot.notification_service.configuration;
 
 
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,9 +20,11 @@ import org.springframework.security.config.annotation.web.configurers.HeadersCon
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 
 import java.io.IOException;
@@ -61,7 +68,7 @@ public class SecurityConfig {
     private static final String[] PUBLIC_ENDPOINTS = {
             "/password/**",
             "/firebase/send_message",
-
+            "/password/request-reset/**",
     };
 
     private final CustomJwtDecoder customJwtDecoder;
@@ -73,29 +80,55 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         log.info("setting up filter chain");
+
         httpSecurity.authorizeHttpRequests(request ->
                 request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers("/password/request-reset/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated());
 //                .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.disable());
-        httpSecurity.headers(headers -> headers
-                .frameOptions(frameOptions -> frameOptions.disable())
-        );
+//        httpSecurity.headers(headers -> headers
+//                .frameOptions(frameOptions -> frameOptions.disable())
+//        );
         httpSecurity.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer
                         .decoder(customJwtDecoder)
                         .jwtAuthenticationConverter(jwtAuthenticationConverter()))
                 .authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
-//        httpSecurity.csrf(AbstractHttpConfigurer::disable);
+        httpSecurity.csrf(AbstractHttpConfigurer::disable);
+
 //        httpSecurity.csrf(AbstractHttpConfigurer::disable)
 //                //...
 //                .headers(httpSecurityHeadersConfigurer -> httpSecurityHeadersConfigurer.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
 //                .authorizeHttpRequests(Customizer.withDefaults());
-        httpSecurity.csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/ws/**") // Vô hiệu hóa CSRF cho endpoint WebSocket
-                );
+//        httpSecurity.csrf(csrf -> csrf
+//                .ignoringRequestMatchers("/ws/**") // Vô hiệu hóa CSRF cho endpoint WebSocket
+//        );
 
         return httpSecurity.build();
     }
+
+    //    @Bean
+//    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
+//        log.info("Setting up filter chain...");
+//
+//        httpSecurity.authorizeHttpRequests(request -> request
+//                .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
+//                .requestMatchers("/ws/**").permitAll()
+//                .anyRequest().authenticated());
+//
+//        httpSecurity.cors(Customizer.withDefaults());
+//        httpSecurity.csrf(csrf -> csrf
+//                .ignoringRequestMatchers("/ws/**"));
+//
+//        httpSecurity.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer
+//                .decoder(customJwtDecoder)
+//                .jwtAuthenticationConverter(jwtAuthenticationConverter())));
+//
+//        httpSecurity.headers(headers -> headers
+//                .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable));
+//
+//        return httpSecurity.build();
+//    }
 
     @Bean
     JwtAuthenticationConverter jwtAuthenticationConverter() {

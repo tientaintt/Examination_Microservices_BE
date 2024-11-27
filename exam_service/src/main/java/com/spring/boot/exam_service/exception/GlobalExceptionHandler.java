@@ -36,7 +36,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     ResponseEntity<ApiResponse> runtimeExceptionHandler(RuntimeException e) {
         log.info("Runtime exception in exam");
-        log.info(e.toString());
+        e.printStackTrace();
+        log.info(e.getMessage());
         ApiResponse response = new ApiResponse();
         response.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage() + " " + e.getMessage());
         response.setCode(ErrorCode.UNAUTHENTICATED.getCode());

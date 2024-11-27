@@ -1,6 +1,8 @@
 package com.spring.boot.notification_service.controller;
 
+import com.spring.boot.event.dto.NotificationEvent;
 import com.spring.boot.notification_service.dto.request.NotificationRequest;
+import com.spring.boot.notification_service.dto.response.APIResponse;
 import com.spring.boot.notification_service.dto.response.NotificationResponse;
 import com.spring.boot.notification_service.entity.Notification;
 import com.spring.boot.notification_service.service.NotificationService;
@@ -8,18 +10,14 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+
+import org.springframework.web.bind.annotation.*;
 
 
 @RequiredArgsConstructor
@@ -28,8 +26,23 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 
 public class NotificationController {
-    SimpMessagingTemplate messagingTemplate;
+    private static final String DEFAULT_SEARCH = "";
+    private static final String DEFAULT_PAGE = "0";
+    private static final String DEFAULT_COLUMN = "id";
+    private static final String DEFAULT_SIZE = "12";
+    private static final String DEFAULT_SORT_INCREASE = "asc";
+     SimpMessagingTemplate messagingTemplate;
      NotificationService notificationService;
+
+     @GetMapping(value = "/my")
+     public APIResponse<?> getAllMyNotifications(
+                                                 @RequestParam(defaultValue = DEFAULT_PAGE) int page,
+                                                 @RequestParam(defaultValue = DEFAULT_COLUMN) String column,
+                                                 @RequestParam(defaultValue = DEFAULT_SIZE) int size,
+                                                 @RequestParam(defaultValue = DEFAULT_SORT_INCREASE) String sortType) {
+         return notificationService.getAllMyNotifications(page,column,size,sortType);
+     }
+
     @MessageMapping("/create/exam/{classRoomId}")
     public void sendMessage(@Payload String message, @DestinationVariable String classRoomId) {
         log.info("sending message to " + classRoomId);
@@ -40,7 +53,6 @@ public class NotificationController {
 
 
     @PostMapping("/send")
-
     public void sendNotification(@RequestBody NotificationRequest request) {
         NotificationResponse notification = notificationService.createNotification(request);
 
@@ -49,5 +61,11 @@ public class NotificationController {
                 "/topic/notifications/" +request.getReceiverId(),
                 notification
         );
+    }
+
+
+    @KafkaListener(topics = "notification-delivery")
+    public void listenNotificationDelivery(NotificationEvent message){
+            notificationService.listenNotificationDelivery(message);
     }
 }

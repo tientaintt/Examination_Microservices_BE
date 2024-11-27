@@ -12,7 +12,7 @@ import java.time.Instant;
 @Entity
 @Builder
 @Table(name = "refresh_token")
-public class RefreshToken extends AbstractAuditingEntity {
+public class RefreshToken {
 
     private static final String REFRESH_TOKEN_ID = "refresh_token_id";
     private static final String REFRESH_TOKEN = "refresh_token";
@@ -28,7 +28,8 @@ public class RefreshToken extends AbstractAuditingEntity {
 
     @Column(name = EXPIRED_DATE, nullable = false)
     private Instant expiryDate;
-
+    @Column(name = "is_enable")
+    private Boolean isEnable = Boolean.TRUE;
     @ManyToOne(fetch = FetchType.LAZY)
     private User user;
 }

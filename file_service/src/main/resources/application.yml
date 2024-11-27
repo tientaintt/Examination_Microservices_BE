@@ -8,7 +8,7 @@ spring:
     allow-bean-definition-overriding: true
   data:
     mongodb:
-      url: mongodb+srv://root:root@cluster0.1zgpkzb.mongodb.net/?retryWrites=true&w=majority/notification_service
+      uri: mongodb+srv://root1:root@cluster0.4pjx8.mongodb.net/file_service
 
 
 app:

@@ -3,6 +3,7 @@ package com.spring.boot.exam_service.utils;
 
 import com.spring.boot.exam_service.constants.Constants;
 import com.spring.boot.exam_service.constants.ErrorMessage;
+import com.spring.boot.exam_service.dto.request.TestNotification;
 import com.spring.boot.exam_service.dto.response.*;
 import com.spring.boot.exam_service.entity.*;
 import org.springframework.data.domain.Page;
@@ -72,6 +73,19 @@ public class CustomBuilder {
                 .endDate(multipleChoiceTest.getEndDate())
                 .testingTime(multipleChoiceTest.getTestingTime())
                 .targetScore(multipleChoiceTest.getTargetScore())
+                .build();
+    }
+    public static TestNotification buildTestNotification(MultipleChoiceTest multipleChoiceTest,List<String> listEmailStudent,Long subjectId,String subjectName) {
+        return TestNotification.builder()
+                .id(multipleChoiceTest.getId())
+                .testName(multipleChoiceTest.getTestName())
+                .description(multipleChoiceTest.getDescription())
+                .startDate(multipleChoiceTest.getStartDate())
+                .endDate(multipleChoiceTest.getEndDate())
+                .testingTime(multipleChoiceTest.getTestingTime())
+                .subjectId(subjectId)
+                .subjectName(subjectName)
+                .registerUserEmails(listEmailStudent)
                 .build();
     }
 

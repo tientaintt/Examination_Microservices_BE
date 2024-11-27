@@ -10,10 +10,6 @@ public class CustomBuilder {
                 .message(notification.getMessage())
                 .id(notification.getId())
                 .createdAt(notification.getCreatedAt())
-                .createdBy(notification.getCreatedBy())
-                .updatedBy(notification.getUpdatedBy())
-                .updatedAt(notification.getUpdatedAt())
-                .isDeleted(notification.getIsDeleted())
                 .build();
     }
 }

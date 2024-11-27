@@ -56,6 +56,7 @@ public class MultipleChoiceTestController {
         return multipleChoiceTestService.
                 getInfoMultipleChoiceTest(testId);
     }
+
     @PreAuthorize("hasRole('STUDENT')")
     @GetMapping(value = "/me", produces = MediaType.APPLICATION_JSON_VALUE)
     public ApiResponse<?> getMyMultipleChoiceTests(

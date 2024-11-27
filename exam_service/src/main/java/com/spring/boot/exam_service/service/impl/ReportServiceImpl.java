@@ -31,7 +31,6 @@ public class ReportServiceImpl implements ReportService {
     public ApiResponse<?> reportTestByMonthByUserId() {
         String  myId =identityService.getCurrentUser().getId();
         List<ReportTestByMonthResponse> response=multipleChoiceTestRepository.countTestsByMonthByCreateBy(myId);
-        log.info(String.valueOf(response.getFirst().getMonth()));
         return ApiResponse.builder().data(response).build();
     }
     @Override

@@ -1,11 +1,9 @@
 package com.spring.boot.exam_service.service.impl;
 
 
+import com.spring.boot.event.dto.NotificationEvent;
 import com.spring.boot.exam_service.dto.ApiResponse;
-import com.spring.boot.exam_service.dto.request.CreateMultipleChoiceTestDTO;
-import com.spring.boot.exam_service.dto.request.NotificationRequest;
-import com.spring.boot.exam_service.dto.request.UpdateMultipleChoiceTestDTO;
-import com.spring.boot.exam_service.dto.request.UserRequest;
+import com.spring.boot.exam_service.dto.request.*;
 import com.spring.boot.exam_service.dto.response.*;
 
 import com.spring.boot.exam_service.entity.*;
@@ -27,6 +25,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +50,7 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
     IdentityService identityService;
     ScoreRepository scoreRepository;
     private final NotificationClient notificationClient;
+    private final KafkaTemplate kafkaTemplate;
 
     @Override
     public ApiResponse<?> getMultipleChoiceTest(Long testId,int page, String column, int size, String sortType) {
@@ -62,6 +62,7 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
         }
         MultipleChoiceTest multipleChoiceTest = multipleChoiceTestOp.get();
         List<Long> questionIds = testQuestionRepository.findQuestionIdsOfTest(multipleChoiceTest.getId());
+        Collections.shuffle(questionIds);
         Page<Question> questions = questionRepository.findAllByIds(questionIds,pageable);
         Page<QuestionResponse> questionsOfTheTest =
                 questions.map(question -> CustomBuilder.buildQuestionResponse(question,answerRepository.findListAnswerByIdQuestion(question.getId())));
@@ -116,15 +117,16 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
         String myId = identityService.getCurrentUser().getId();
         Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
         String searchText = "%" + search.trim() + "%";
-        Page<MyMultipleChoiceTestResponse> response ;
+        Page<MultipleChoiceTest> mct ;
         if(Objects.nonNull(endOfDate)){
-            response =
-                    multipleChoiceTestRepository.findMCTestManagementByDay(myId,searchText,startOfDate,endOfDate, pageable);
+            mct =
+                    multipleChoiceTestRepository.findMCTestOfSubjectManagerByDay(myId,startOfDate,endOfDate,searchText, pageable);
 
         } else {
-            response = multipleChoiceTestRepository.
+            mct = multipleChoiceTestRepository.
                     findNotEndedMultipleChoiceTestsManagement(myId,startOfDate, searchText, pageable);
         }
+        Page<MultipleChoiceTestResponse> response = mct.map(CustomBuilder::buildMultipleChoiceTestResponse);
         return ApiResponse.builder().data(response).build();
     }
 
@@ -288,6 +290,25 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
         }
         multipleChoiceTest = multipleChoiceTestRepository.save(multipleChoiceTest);
         MultipleChoiceTestResponse response = CustomBuilder.buildMultipleChoiceTestResponse(multipleChoiceTest);
+        Optional<Subject> subject=subjectRepository.findById(multipleChoiceTest.getSubject().getId());
+        Long subjectId=subject.get().getId();
+        String subjectName=subject.get().getSubjectName();
+        List<String> studentIds=subjectRepository.getAllUserIdOfSubjectBySubjectId(subjectId);
+        List<UserRequest> students=identityService.getAllUserByListId(studentIds);
+        List<String> listEmailStudent=students.stream().map(student->
+                student.getEmailAddress()
+        ).toList();
+        TestNotification testNotification=CustomBuilder.buildTestNotification(multipleChoiceTest,listEmailStudent,subjectId,subjectName);
+        Map<String, Object> params = new HashMap<>();
+        params.put("testNotification", testNotification);
+        params.put("senderId",multipleChoiceTest.getCreatedBy());
+        params.put("listReceiverId", studentIds);
+        NotificationEvent event = NotificationEvent.builder()
+                .channel("EMAIL")
+                .templateCode("EDIT_TEST")
+                .param(params)
+                .build();
+        kafkaTemplate.send("notification-delivery",event);
 //        mailService.sendTestUpdatedNotificationEmail(multipleChoiceTest);
         return ApiResponse.builder().data(response).build();
     }
@@ -301,14 +322,28 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
         MultipleChoiceTest multipleChoiceTest = multipleChoiceTestOp.get();
         Long unixTimeNow = Timestamp.from(ZonedDateTime.now().toInstant()).getTime();
         if(multipleChoiceTest.getStartDate() < unixTimeNow) {
-//            LinkedHashMap<String, String> response = new LinkedHashMap<>();
-//            response.put(Constants.ERROR_CODE_KEY, ErrorMessage.MULTIPLE_CHOICE_TEST_DELETE_STARTED_TEST.getErrorCode());
-//            response.put(Constants.MESSAGE_KEY, ErrorMessage.MULTIPLE_CHOICE_TEST_DELETE_STARTED_TEST.getMessage());
-//            return ApiResponse.status(HttpStatus.BAD_REQUEST)
-//                    .contentType(MediaType.APPLICATION_JSON)
-//                    .body(response);
+
             throw new AppException(ErrorCode.MULTIPLE_CHOICE_TEST_DELETE_STARTED_TEST_ERROR);
         }
+        Optional<Subject> subject =subjectRepository.findById(multipleChoiceTest.getSubject().getId());
+        Long subjectId=subject.get().getId();
+        String subjectName=subject.get().getSubjectName();
+        List<String> studentIds=subjectRepository.getAllUserIdOfSubjectBySubjectId(subjectId);
+        List<UserRequest> students=identityService.getAllUserByListId(studentIds);
+        List<String> listEmailStudent=students.stream().map(student->
+                student.getEmailAddress()
+        ).toList();
+        TestNotification testNotification=CustomBuilder.buildTestNotification(multipleChoiceTest,listEmailStudent,subjectId,subjectName);
+        Map<String, Object> params = new HashMap<>();
+        params.put("testNotification", testNotification);
+        params.put("senderId",multipleChoiceTest.getCreatedBy());
+        params.put("listReceiverId", studentIds);
+        NotificationEvent event = NotificationEvent.builder()
+                .channel("EMAIL")
+                .templateCode("DELETE_TEST")
+                .param(params)
+                .build();
+        kafkaTemplate.send("notification-delivery",event);
 //        mailService.sendTestDeletedNotificationEmail(multipleChoiceTest);
         multipleChoiceTestRepository.deleteById(testId);
         return ApiResponse.builder().build();
@@ -339,14 +374,32 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
                             (multipleChoiceTest.getId(), dto.getRandomQuestions());
         }
         MultipleChoiceTestResponse response = CustomBuilder.buildMultipleChoiceTestResponse(multipleChoiceTest);
-        NotificationRequest notificationRequest=NotificationRequest.builder()
-                .senderId(multipleChoiceTest.getCreatedBy())
-                .receiverId("55420d21-d239-4354-be20-c452c9b72af9")
-                .title("Create Multiple Choice Test")
-                .idOfTypeNotify(multipleChoiceTest.getId())
+//        NotificationRequest notificationRequest=NotificationRequest.builder()
+//                .senderId(multipleChoiceTest.getCreatedBy())
+//                .receiverId("55420d21-d239-4354-be20-c452c9b72af9")
+//                .title("Create Multiple Choice Test")
+//                .idOfTypeNotify(multipleChoiceTest.getId())
+//                .build();
+//        notificationClient.sendNotification(notificationRequest);
+        Long subjectId=dto.getSubjectId();
+        String subjectName=subject.getSubjectName();
+        List<String> studentIds=subjectRepository.getAllUserIdOfSubjectBySubjectId(subjectId);
+        List<UserRequest> students=identityService.getAllUserByListId(studentIds);
+        List<String> listEmailStudent=students.stream().map(student->
+             student.getEmailAddress()
+        ).toList();
+        TestNotification testNotification=CustomBuilder.buildTestNotification(multipleChoiceTest,listEmailStudent,subjectId,subjectName);
+        Map<String, Object> params = new HashMap<>();
+        params.put("testNotification", testNotification);
+        params.put("senderId",multipleChoiceTest.getCreatedBy());
+        params.put("listReceiverId", studentIds);
+        NotificationEvent event = NotificationEvent.builder()
+                .channel("EMAIL")
+                .templateCode("CREATE_TEST")
+                .param(params)
                 .build();
-        notificationClient.sendNotification(notificationRequest);
-        // Send notification email to student in this classroom
+        kafkaTemplate.send("notification-delivery",event);
+
 //        mailService.sendTestCreatedNotificationEmail(dto.getClassroomId(), multipleChoiceTest);
         return ApiResponse.builder().data(response).build();
     }

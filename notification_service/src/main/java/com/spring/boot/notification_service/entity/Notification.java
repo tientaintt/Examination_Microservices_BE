@@ -9,7 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.io.Serializable;
 
-@Document(collation = "notification")
+@Document(collection = "notification")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

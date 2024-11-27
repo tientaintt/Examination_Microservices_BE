@@ -1,11 +1,10 @@
 package com.spring.boot.notification_service.service.impl;
 
 
-import com.spring.boot.notification_service.dto.request.MultipleChoiceTestRequest;
+import com.spring.boot.notification_service.dto.request.TestNotification;
 import com.spring.boot.notification_service.dto.request.UserRequest;
 import com.spring.boot.notification_service.exception.AppException;
 import com.spring.boot.notification_service.exception.ErrorCode;
-import com.spring.boot.notification_service.repository.httpclient.IdentityClient;
 import com.spring.boot.notification_service.service.IdentityService;
 import com.spring.boot.notification_service.service.MailService;
 import com.spring.boot.notification_service.service.ThymeleafService;
@@ -19,17 +18,14 @@ import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 
 
 import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -88,17 +84,17 @@ public class MailServiceImpl implements MailService {
 
     @Override
     @Async
-    public void sendTestUpdatedNotificationEmail(MultipleChoiceTestRequest multipleChoiceTest) {
+    public void sendTestUpdatedNotificationEmail(TestNotification multipleChoiceTest) {
 
         sendEmailTestUpdatedNotification(multipleChoiceTest, multipleChoiceTest.getRegisterUserEmails());
     }
 
     @Async
-    protected void sendEmailTestUpdatedNotification(MultipleChoiceTestRequest multipleChoiceTest, List<String> registerUserEmails) {
+    protected void sendEmailTestUpdatedNotification(TestNotification multipleChoiceTest, List<String> registerUserEmails) {
         Timestamp stamp = new Timestamp(multipleChoiceTest.getStartDate());
         Date date = new Date(stamp.getTime());
         String startDate = String.format("%s:%s %s/%s", date.getHours(), date.getMinutes(), date.getDate(), date.getMonth()+1);
-        String classroomName = multipleChoiceTest.getClassName();
+        String subjectName = multipleChoiceTest.getSubjectName();
         String testingTime = multipleChoiceTest.getTestingTime().toString() + " minutes";
         String testName = multipleChoiceTest.getTestName();
         try {
@@ -110,7 +106,7 @@ public class MailServiceImpl implements MailService {
             message.setSubject("[ONLINE EXAM PLATFORM] Your exam has been updated!");
             message.setContent(
                     thymeleafService.getTestUpdatedNotificationMailContent
-                            (classroomName, testName, startDate, testingTime), CONTENT_TYPE_TEXT_HTML);
+                            (subjectName, testName, startDate, testingTime), CONTENT_TYPE_TEXT_HTML);
             Transport.send(message);
 
         } catch (MessagingException e) {
@@ -120,23 +116,23 @@ public class MailServiceImpl implements MailService {
 
     @Override
     @Async
-    public void sendTestCreatedNotificationEmail(Long subjectId, MultipleChoiceTestRequest multipleChoiceTest) {
+    public void sendTestCreatedNotificationEmail(Long subjectId, TestNotification multipleChoiceTest) {
 
         sendEmailTestCreatedNotification(multipleChoiceTest.getRegisterUserEmails(), multipleChoiceTest);
     }
 
     @Override
     @Async
-    public void sendTestDeletedNotificationEmail(MultipleChoiceTestRequest multipleChoiceTest) {
+    public void sendTestDeletedNotificationEmail(TestNotification multipleChoiceTest) {
 
         sendEmailTestDeletedNotification(multipleChoiceTest.getRegisterUserEmails(), multipleChoiceTest);
     }
     @Async
-    protected void sendEmailTestDeletedNotification(List<String> registerUserEmails, MultipleChoiceTestRequest multipleChoiceTest) {
+    protected void sendEmailTestDeletedNotification(List<String> registerUserEmails, TestNotification multipleChoiceTest) {
         Timestamp stamp = new Timestamp(multipleChoiceTest.getStartDate());
         Date date = new Date(stamp.getTime());
         String startDate = String.format("%s:%s %s/%s", date.getHours(), date.getMinutes(), date.getDate(), date.getMonth()+1);
-        String classroomName = multipleChoiceTest.getClassName();
+        String subjectName = multipleChoiceTest.getSubjectName();
         String testingTime = multipleChoiceTest.getTestingTime().toString() + " minutes";
         String testName = multipleChoiceTest.getTestName();
         try {
@@ -148,7 +144,7 @@ public class MailServiceImpl implements MailService {
             message.setSubject("[ONLINE EXAM PLATFORM] Your exam has been cancelled!");
             message.setContent(
                     thymeleafService.getTestDeletedNotificationMailContent
-                            (classroomName, testName, startDate, testingTime), CONTENT_TYPE_TEXT_HTML);
+                            (subjectName, testName, startDate, testingTime), CONTENT_TYPE_TEXT_HTML);
             Transport.send(message);
 
         } catch (MessagingException e) {
@@ -157,11 +153,11 @@ public class MailServiceImpl implements MailService {
     }
 
     @Async
-    protected void sendEmailTestCreatedNotification(List<String> registerUserEmails, MultipleChoiceTestRequest multipleChoiceTest) {
+    protected void sendEmailTestCreatedNotification(List<String> registerUserEmails, TestNotification multipleChoiceTest) {
         Timestamp stamp = new Timestamp(multipleChoiceTest.getStartDate());
         Date date = new Date(stamp.getTime());
         String startDate = String.format("%s:%s %s/%s", date.getHours(), date.getMinutes(), date.getDate(), date.getMonth()+1);
-        String classroomName = multipleChoiceTest.getClassName();
+        String subjectName = multipleChoiceTest.getSubjectName();
         String testingTime = multipleChoiceTest.getTestingTime().toString() + " minutes";
         String testName = multipleChoiceTest.getTestName();
         try {
@@ -173,7 +169,7 @@ public class MailServiceImpl implements MailService {
             message.setSubject("[ONLINE EXAM PLATFORM] Your subject has a new exam!");
             message.setContent(
                     thymeleafService.getTestCreatedNotificationMailContent
-                            (classroomName, testName, startDate, testingTime), CONTENT_TYPE_TEXT_HTML);
+                            (subjectName, testName, startDate, testingTime), CONTENT_TYPE_TEXT_HTML);
             Transport.send(message);
 
         } catch (MessagingException e) {

@@ -16,6 +16,11 @@ spring:
   jackson:
     serialization:
       FAIL_ON_EMPTY_BEANS: false
+  kafka:
+    bootstrap-servers: localhost:9094
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
   jpa:
     hibernate:
       ddl-auto: update

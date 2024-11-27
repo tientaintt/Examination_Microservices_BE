@@ -54,7 +54,7 @@ public class ScoreController {
         return scoreService.getAllStudentScoreOfTest(testId, search, page, column, size, sortType);
     }
     @GetMapping(value = "/export/{scoreId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN','STUDENT')")
     public ResponseEntity<InputStreamResource>  exportPDFScoreById(@PathVariable(name = "scoreId") Long scoreId){
 
         return scoreService.exportPDFScoreById(scoreId);

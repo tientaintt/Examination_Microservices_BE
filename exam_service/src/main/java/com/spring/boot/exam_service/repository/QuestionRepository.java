@@ -40,10 +40,13 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
             "and  q.question_group_id \n" +
             "\tIN (SELECT id FROM question_group qg where qg.subject" +
             "_id = :subjectId)", nativeQuery = true)
-    Page<Question> getQuestionsOfClassroom(Long subjectId, String searchText, boolean isActiveQuestion, Pageable pageable);
+    Page<Question> getQuestionsOfSubject(Long subjectId, String searchText, boolean isActiveQuestion, Pageable pageable);
+    @Query("SELECT count (*)" +
+            "FROM Question q " +
+            "where q.questionGroup.id =:questionGroupId and q.isEnable = true")
     Long countQuestionsByQuestionGroupId(Long questionGroupId);
     @Query("SELECT q.content " +
             "FROM Question q " +
-            "where q.id=:questionId")
+            "where q.id=:questionId ")
     String getContentQuestionByQuestionId(Long questionId);
 }

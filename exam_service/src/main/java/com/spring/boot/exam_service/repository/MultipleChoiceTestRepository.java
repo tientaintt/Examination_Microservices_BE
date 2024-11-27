@@ -57,8 +57,7 @@ public interface MultipleChoiceTestRepository extends JpaRepository<MultipleChoi
             "    ) and mct.endDate > :unixTimeNow and mct.testName like :searchText")
     Page<MyMultipleChoiceTestResponse> findMyNotEndedMultipleChoiceTests(String myId, Long unixTimeNow, String searchText, Pageable pageable);
 
-    @Query("select new com.spring.boot.exam_service.dto.response.MyMultipleChoiceTestResponse(mct.id, mct.createdBy , mct.startDate , mct.endDate, mct.testName,mct.description, mct.testingTime, \n" +
-            "\tmct.subject.id , cr.subjectName , cr.subjectCode , cr.description, false)\n" +
+    @Query("select mct" +
             "\tFROM MultipleChoiceTest mct left join Subject cr on mct.subject.id = cr.id\n" +
             "\twhere mct.subject.id IN "  +
             "(" +
@@ -67,7 +66,7 @@ public interface MultipleChoiceTestRepository extends JpaRepository<MultipleChoi
             "WHERE s.userID like :managerId" +
             ") "+
             " and mct.endDate > :unixTimeNow and mct.testName like :searchText")
-    Page<MyMultipleChoiceTestResponse> findNotEndedMultipleChoiceTestsManagement(String managerId, Long unixTimeNow, String searchText, Pageable pageable);
+    Page<MultipleChoiceTest> findNotEndedMultipleChoiceTestsManagement(String managerId, Long unixTimeNow, String searchText, Pageable pageable);
 
     @Query("select new com.spring.boot.exam_service.dto.response.MyMultipleChoiceTestResponse(mct.id, mct.createdBy , mct.startDate , mct.endDate, mct.testName,mct.description, mct.testingTime, \n" +
             "\tmct.subject.id , cr.subjectName , cr.subjectCode , cr.description, false)\n" +
@@ -100,8 +99,7 @@ public interface MultipleChoiceTestRepository extends JpaRepository<MultipleChoi
             "and ( mct.startDate >= :startDay and mct.startDate <= :endDay ) and mct.testName like :searchText")
     Page<MyMultipleChoiceTestResponse> findMCTestManagementByDay(String managerId, String searchText , Long startDay, Long endDay, Pageable pageable);
 
-    @Query("select new com.spring.boot.exam_service.dto.response.MyMultipleChoiceTestResponse(mct.id, mct.createdBy , mct.startDate , mct.endDate, mct.testName,mct.description, mct.testingTime, \n" +
-            "\tmct.subject.id , cr.subjectName , cr.subjectCode , cr.description, false)\n" +
+    @Query("select mct" +
             "\tFROM MultipleChoiceTest mct left join Subject cr on mct.subject.id = cr.id\n" +
             "\twhere mct.subject.id IN " +
             "(" +
@@ -110,7 +108,7 @@ public interface MultipleChoiceTestRepository extends JpaRepository<MultipleChoi
             "WHERE s.userID like :managerId" +
             ")"+
             "   and ( mct.startDate >= :startDay and mct.startDate <= :endDay ) and mct.testName like :searchText")
-    Page<MyMultipleChoiceTestResponse> findMCTestOfSubjectManagerByDay(String managerId,Long startDay, Long endDay,String searchText, Pageable pageable);
+    Page<MultipleChoiceTest> findMCTestOfSubjectManagerByDay(String managerId,Long startDay, Long endDay,String searchText, Pageable pageable);
 
     @Query("select new com.spring.boot.exam_service.dto.response.MyMultipleChoiceTestResponse(mct.id, mct.createdBy , mct.startDate , mct.endDate, mct.testName,mct.description, mct.testingTime, \n" +
             "\tmct.subject.id , cr.subjectName , cr.subjectCode , cr.description, false)\n" +

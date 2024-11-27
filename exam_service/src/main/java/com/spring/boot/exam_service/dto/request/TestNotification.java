@@ -1,16 +1,14 @@
-package com.spring.boot.notification_service.dto.request;
-
+package com.spring.boot.exam_service.dto.request;
 
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.List;
 
+import java.util.List;
 @Builder
 @Data
 
-public class MultipleChoiceTestRequest {
-
+public class TestNotification {
     private Long id;
 
     private String testName;
@@ -26,7 +24,7 @@ public class MultipleChoiceTestRequest {
 
     private Long testingTime;
 
-    private Long classId;
-    private String className;
+    private Long subjectId;
+    private String subjectName;
     private List<String> registerUserEmails;
 }
