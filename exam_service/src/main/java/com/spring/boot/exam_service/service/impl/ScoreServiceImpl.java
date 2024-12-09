@@ -26,12 +26,17 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.PDType3Font;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -40,11 +45,8 @@ import java.io.*;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.*;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -134,7 +136,7 @@ public class ScoreServiceImpl implements ScoreService {
                 PDType0Font robotoBlack = PDType0Font.load(document, fontStream);
 
                 PDType0Font robotoLight = PDType0Font.load(document, new ClassPathResource("static/font/Roboto-Light.ttf").getInputStream());
-                contentStream.setFont( robotoBlack,16);
+                contentStream.setFont(robotoBlack, 16);
 
                 contentStream.beginText();
                 contentStream.newLineAtOffset(300, 750);
@@ -161,7 +163,7 @@ public class ScoreServiceImpl implements ScoreService {
                 contentStream.endText();
 
 //                contentStream.setFont(PDType1Font.HELVETICA, 12);
-                contentStream.setFont( robotoLight,12);
+                contentStream.setFont(robotoLight, 12);
                 contentStream.beginText();
                 contentStream.newLineAtOffset(100, 590);
                 contentStream.showText("Submitted Questions and Answers:");
@@ -169,33 +171,46 @@ public class ScoreServiceImpl implements ScoreService {
 
                 float yPosition = 570;
                 final float margin = 50;
-                final float lineHeight = 20;
+
+                final float pageWidth = 595.2768f;
 
                 for (SubmittedQuestionResponse response : submittedQuestionResponses) {
                     if (yPosition < margin) {
+
+
                         contentStream.close();
                         page = new PDPage();
                         document.addPage(page);
                         contentStream = new PDPageContentStream(document, page);
-                        contentStream.setFont( robotoLight,12);
+                        contentStream.setFont(robotoLight, 12);
                         yPosition = 750;
+
+
                     }
 
-                    contentStream.beginText();
-                    contentStream.newLineAtOffset(100, yPosition);
-                    contentStream.showText("Question: " + response.getContent());
-                    contentStream.endText();
+                    yPosition = wrapText(document, contentStream, robotoLight, "Question: " + response.getContent(), 100, yPosition, pageWidth - 100 * 2);
                     yPosition -= 20;
+                    if (yPosition < margin) {
 
+
+                        contentStream.close();
+                        page = new PDPage();
+                        document.addPage(page);
+                        contentStream = new PDPageContentStream(document, page);
+                        contentStream.setFont(robotoLight, 12);
+                        yPosition = 750;
+
+
+                    }
                     switch (response.getQuestionType()) {
                         case "Multiple Choice":
-                            yPosition = drawMultipleChoice(contentStream, response, yPosition, margin);
+                            yPosition = drawMultipleChoice(document, contentStream, response, yPosition, 100, robotoLight);
                             break;
                         case "Fill in the blank":
-                            yPosition = drawFillInBlank(contentStream, response, yPosition);
+                            yPosition = drawFillInBlank(document, contentStream, response, yPosition, margin, robotoLight);
                             break;
                         case "True/False":
-                            yPosition = drawTrueFalse(contentStream, response, yPosition);
+                            yPosition = drawTrueFalse(document, contentStream, response, yPosition, margin, robotoLight);
                             break;
                     }
                 }
@@ -204,6 +219,7 @@ public class ScoreServiceImpl implements ScoreService {
                     contentStream.close();
                 }
             }
+
 
             document.save(outputStream);
             document.close();
@@ -218,6 +234,47 @@ public class ScoreServiceImpl implements ScoreService {
             e.printStackTrace();
             throw new RuntimeException("Error generating PDF");
         }
+    }
+
+
+    float wrapText(PDDocument document, PDPageContentStream contentStream, PDType0Font font, String text, float x, float y, float maxWidth) throws IOException {
+        final float lineHeight = 20;
+        float spaceWidth = font.getStringWidth(" ") / 1000 * 12;
+        StringBuilder currentLine = new StringBuilder();
+        List<String> lines = new ArrayList<>();
+        String[] words = text.split(" ");
+
+        for (String word : words) {
+            String testLine = currentLine + " " + word;
+            float width = font.getStringWidth(testLine) / 1000 * 12;
+
+            if (width < maxWidth) {
+                currentLine.append(" ").append(word);
+            } else {
+                if (currentLine.length() > 0) {
+                    lines.add(currentLine.toString());
+                }
+                currentLine = new StringBuilder(word);
+            }
+        }
+
+        if (currentLine.length() > 0) {
+            lines.add(currentLine.toString());
+        }
+        if (y < 50) {
+            contentStream=createNewPage(document, contentStream, font);
+            y = 750;
+        }
+        // Draw the lines on the page and update yPosition
+        for (String line : lines) {
+            contentStream.beginText();
+            contentStream.newLineAtOffset(x, y);
+            contentStream.showText(line);
+            contentStream.endText();
+            y -= lineHeight;  // Update y after drawing each line
+
+        }
+        return y;
     }
 
     private void setResultColor(PDPageContentStream contentStream, boolean isCorrect) throws IOException {
@@ -244,9 +301,12 @@ public class ScoreServiceImpl implements ScoreService {
         }
     }
 
-    private float drawMultipleChoice(PDPageContentStream contentStream, SubmittedQuestionResponse response, float yPosition, float margin) throws IOException {
+    private float drawMultipleChoice(PDDocument document, PDPageContentStream contentStream, SubmittedQuestionResponse response, float yPosition, float margin, PDType0Font font) throws IOException {
         float x = 100;
-
+//        if (yPosition < margin) {
+//            contentStream=createNewPage(document, contentStream, font);
+//            yPosition = 750;
+//        }
         for (AnswerResponse answer : response.getAnswers()) {
             drawCheckbox(contentStream, x, yPosition, response.getSubmittedAnswer().equals(answer.getAnswerContent()));
             contentStream.beginText();
@@ -254,9 +314,11 @@ public class ScoreServiceImpl implements ScoreService {
             contentStream.showText(answer.getAnswerContent());
             contentStream.endText();
             yPosition -= 20;
+
         }
 
         yPosition -= 10;
+
         contentStream.beginText();
         contentStream.newLineAtOffset(x, yPosition);
         contentStream.showText("Correct Answer: " + response.getCorrectAnswer());
@@ -274,7 +336,7 @@ public class ScoreServiceImpl implements ScoreService {
         return yPosition - 30;
     }
 
-    private float drawFillInBlank(PDPageContentStream contentStream, SubmittedQuestionResponse response, float yPosition) throws IOException {
+    private float drawFillInBlank(PDDocument document, PDPageContentStream contentStream, SubmittedQuestionResponse response, float yPosition, float margin, PDType0Font font) throws IOException {
         float x = 100;
 
         contentStream.beginText();
@@ -283,12 +345,17 @@ public class ScoreServiceImpl implements ScoreService {
         contentStream.endText();
 
         yPosition -= 20;
+        if (yPosition < margin) {
+            createNewPage(document, contentStream, font);
+            yPosition = 750;
+        }
         contentStream.beginText();
         contentStream.newLineAtOffset(x, yPosition);
         contentStream.showText("Correct Answer: " + response.getCorrectAnswer());
         contentStream.endText();
 
         yPosition -= 20;
+
         contentStream.beginText();
         contentStream.newLineAtOffset(x, yPosition);
         String resultText = response.getSubmittedAnswer().equals(response.getCorrectAnswer()) ? "Correct" : "Incorrect";
@@ -301,7 +368,7 @@ public class ScoreServiceImpl implements ScoreService {
         return yPosition - 30;
     }
 
-    private float drawTrueFalse(PDPageContentStream contentStream, SubmittedQuestionResponse response, float yPosition) throws IOException {
+    private float drawTrueFalse(PDDocument document, PDPageContentStream contentStream, SubmittedQuestionResponse response, float yPosition, float margin, PDType0Font font) throws IOException {
         float x = 100;
 
         drawCheckbox(contentStream, x, yPosition, "True".equals(response.getSubmittedAnswer()));
@@ -332,8 +399,15 @@ public class ScoreServiceImpl implements ScoreService {
         return yPosition - 30;
     }
 
+    private PDPageContentStream createNewPage(PDDocument document, PDPageContentStream contentStream, PDType0Font font) throws IOException {
+        contentStream.close();
+        PDPage page = new PDPage();
+        document.addPage(page);
+        contentStream = new PDPageContentStream(document, page);
+        contentStream.setFont(font, 12);
+        return contentStream;
+    }
 
-    //CHECK
     @Override
     public ApiResponse<?> getAllStudentScoreOfTest(Long testId, String search, int page, String column, int size, String sortType) {
         Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
@@ -449,6 +523,7 @@ public class ScoreServiceImpl implements ScoreService {
                                 .build());
                 log.info(question.getId().toString());
                 if (answerRepository.findCorrectAnswerByIdQuestion(question.getId()).equals(item.getAnswer())) {
+                    log.info("totalScore {}", totalScore);
                     totalScore += eachQuestionScore;
                     totalCorrect += 1;
                 }
@@ -496,5 +571,69 @@ public class ScoreServiceImpl implements ScoreService {
         Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
         Page<MyScoreResponse> response = scoreRepository.findAllMyScores(studentOp.getId(), searchText, dateFrom, dateTo, pageable);
         return ApiResponse.builder().data(response).build();
+    }
+
+    @Override
+    public ResponseEntity<InputStreamResource> exportScoresOfExam(Long testId) {
+        String fileName = testId + ".xlsx";
+        ByteArrayInputStream inputStream = this.handleExportScoresByIdExam(testId, "excel");
+        InputStreamResource resource = new InputStreamResource(inputStream);
+        ResponseEntity<InputStreamResource> response = ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(resource);
+        return response;
+    }
+
+    private ByteArrayInputStream handleExportScoresByIdExam(Long testId, String typeExport) {
+        log.info("exportQuestionOfQuestionGroup");
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        if ("excel".equalsIgnoreCase(typeExport)) {
+            log.info("Exporting exportQuestionOfQuestionGroup Excel");
+            try (Workbook workbook = new XSSFWorkbook()) {
+                log.info("Creating workbook");
+                Sheet sheet = workbook.createSheet("List question");
+                List<StudentScoreResponse> scores = scoreRepository.findAllByMultipleChoiceTestId(testId);
+                scores.forEach(studentScoreResponse -> {
+                    List<UserRequest> userRequest = identityService.getAllUserByListId(Collections.singletonList(studentScoreResponse.getStudentId()));
+                    studentScoreResponse.setStudentDisplayName(userRequest.get(0).getDisplayName());
+                    studentScoreResponse.setStudentLoginName(userRequest.get(0).getLoginName());
+                });
+                Row headerRow = sheet.createRow(0);
+                headerRow.createCell(0).setCellValue("Student name");
+                headerRow.createCell(1).setCellValue("Submit date");
+                headerRow.createCell(2).setCellValue("Total score");
+                headerRow.createCell(3).setCellValue("Target score");
+                headerRow.createCell(4).setCellValue("Late");
+                int i = 0;
+                for (StudentScoreResponse scoreResponse : scores) {
+
+                    Row row = sheet.createRow(i + 1);
+                    row.createCell(0).setCellValue(scoreResponse.getStudentDisplayName());
+                    row.createCell(1).setCellValue(Date.from(scoreResponse.getSubmittedDate()));
+                    row.createCell(2).setCellValue(scoreResponse.getTotalScore());
+                    row.createCell(3).setCellValue(scoreResponse.getTargetScore());
+                    headerRow.createCell(4).setCellValue(scoreResponse.getIsLate());
+                    i++;
+                }
+                for (int j = 0; j < 4; j++) {  // Điều chỉnh cho 4 cột
+                    sheet.autoSizeColumn(j);
+                }
+                workbook.write(out);
+                return new ByteArrayInputStream(out.toByteArray());
+            } catch (IOException e) {
+                throw new AppException(ErrorCode.CANNOT_READ_FILE);
+            } finally {
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    throw new AppException(ErrorCode.CANNOT_WRITE_FILE);
+                }
+            }
+
+
+        }
+        return null;
     }
 }

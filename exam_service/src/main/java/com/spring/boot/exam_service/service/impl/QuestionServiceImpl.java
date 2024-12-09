@@ -129,45 +129,12 @@ public class QuestionServiceImpl implements QuestionService {
 
         Question question = questionOp.get();
         question.setQuestionType(questionType);
-//        String correctAnswer = answerRepository.findCorrectAnswerByIdQuestion(question.getId());
 
         if (Objects.nonNull(dto.getContent())) {
             question.setContent(dto.getContent().trim());
             modifyUpdateQuestion(question);
         }
-//        if(Objects.nonNull(dto.getFirstAnswer())) {
-//            String answerContent = dto.getFirstAnswer().getAnswerContent().trim();
-//            question.setFirstAnswer(answerContent);
-//            if(dto.getFirstAnswer().getIsCorrect()) {
-//                correctAnswer = answerContent;
-//            }
-//            modifyUpdateQuestion(question);
-//        }
-//        if(Objects.nonNull(dto.getSecondAnswer())) {
-//            String answerContent = dto.getSecondAnswer().getAnswerContent().trim();
-//            question.setSecondAnswer(answerContent);
-//            if(dto.getSecondAnswer().getIsCorrect()) {
-//                correctAnswer = answerContent;
-//            }
-//            modifyUpdateQuestion(question);
-//        }
-//        if(Objects.nonNull(dto.getThirdAnswer())) {
-//            String answerContent = dto.getThirdAnswer().getAnswerContent().trim();
-//            question.setThirdAnswer(answerContent);
-//            if(dto.getThirdAnswer().getIsCorrect()) {
-//                correctAnswer = answerContent;
-//            }
-//            modifyUpdateQuestion(question);
-//        }
-//        if(Objects.nonNull(dto.getFourthAnswer())) {
-//            String answerContent = dto.getFourthAnswer().getAnswerContent().trim();
-//            question.setFourthAnswer(answerContent);
-//            if(dto.getFourthAnswer().getIsCorrect()) {
-//                correctAnswer = answerContent;
-//            }
-//            modifyUpdateQuestion(question);
-//        }
-//        question.setCorrectAnswer(correctAnswer);
+        answerQuestionRepository.deleteByQuestion(question);
         question = questionRepository.save(question);
         Question finalQuestion = question;
         List<AnswerResponse> answerList = new ArrayList<>();
@@ -241,6 +208,7 @@ public class QuestionServiceImpl implements QuestionService {
         }
         Page<Question> questions = questionRepository
                 .getQuestionsOfQuestionGroupByQuestionGroupId(questionGroupId, searchText, isActiveQuestion, pageable);
+       log.info(searchText);
         List<AnswerResponse> answerResponseList = new ArrayList<>();
 
         Page<QuestionResponse> response = questions.map(question ->{

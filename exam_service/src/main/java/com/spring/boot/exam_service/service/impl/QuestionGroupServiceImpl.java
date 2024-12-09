@@ -233,6 +233,9 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
 
 
                                 listAnswerContent.forEach(answerContent -> {
+                                    if(answerContent.isBlank()){
+                                        throw new AppException(ErrorCode.NO_CORRECT_ANSWER_FOUND);
+                                    }
                                     Optional<Answer> answerOptional = answerRepository.findByAnswer(answerContent);
                                     Answer answer;
 

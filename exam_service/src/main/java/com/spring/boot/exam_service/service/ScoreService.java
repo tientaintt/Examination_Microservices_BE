@@ -17,4 +17,6 @@ public interface ScoreService {
 
 
    ApiResponse<?> getAllScoreOfStudent( String userID,String search, Long dateFrom, Long dateTo, int page, String column, int size, String sortType);
+
+   ResponseEntity<InputStreamResource> exportScoresOfExam(Long testId);
 }

@@ -406,7 +406,7 @@ public class UserServiceImpl implements UserService {
             addStudent(userProfile);
 //            mailService.sendVerificationEmail(userProfile.getLoginName());
         }
-        return APIResponse.builder().build();
+        return APIResponse.builder().data(userMapper.toUserResponse(userProfile)).build();
     }
 
     @Override
@@ -586,6 +586,28 @@ public class UserServiceImpl implements UserService {
         return APIResponse.builder()
                 .data(responses)
                 .build();
+    }
+
+    @Override
+    public APIResponse<?> getAllUser() {
+        Optional<Role> role=roleRepository.findByName("ADMIN");
+        if (role.isPresent()) {
+            List<User> users=userRepository.getAllByRolesIsNot(role.get());
+            List<UserResponse> responses=users.stream().map(user -> {
+                return UserResponse.builder()
+                        .id(user.getId())
+                        .isEnable(user.getIsEnable())
+                        .roles(user.getRoles().stream().map(role1 -> role1.getName()).toList())
+                        .newEmailAddress(user.getNewEmailAddress())
+                        .isEmailAddressVerified(user.getIsEmailAddressVerified())
+                        .displayName(user.getDisplayName())
+                        .emailAddress(user.getEmailAddress())
+                        .loginName(user.getUsername())
+                        .build();
+            }).toList();
+            return APIResponse.builder().data(responses).build();
+        }
+        return null;
     }
 }
 

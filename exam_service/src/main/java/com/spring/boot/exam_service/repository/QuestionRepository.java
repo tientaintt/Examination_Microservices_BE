@@ -25,7 +25,7 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     @Query(value = "select * FROM question where " +
             "question_group_id = :questionGroupId " +
             "and is_enable = :isActiveQuestion " +
-            "and (content LIKE %:searchText% OR :searchText IS NULL OR :searchText = '')", nativeQuery = true)
+            "and (content LIKE :searchText OR :searchText IS NULL OR :searchText = '')", nativeQuery = true)
     Page<Question> getQuestionsOfQuestionGroupByQuestionGroupId(Long questionGroupId,String searchText, boolean isActiveQuestion, Pageable pageable);
 
     @Query(value = "SELECT * FROM question where \n" +

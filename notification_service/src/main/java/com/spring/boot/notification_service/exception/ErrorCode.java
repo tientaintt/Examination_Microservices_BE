@@ -30,6 +30,7 @@ public enum ErrorCode {
     FIREBASE_ERROR(1016,"Cannot access firebase database",HttpStatus.INTERNAL_SERVER_ERROR),
     FIREBASE_MESSAGING_ERROR(1017,"Cannot send message to firebase",HttpStatus.INTERNAL_SERVER_ERROR),
     EMAIL_VERIFIED_ERROR(1018,"Your email is verified",HttpStatus.BAD_REQUEST),
+    NOTIFICATION_NOT_FOUND(1019,"Notification not found",HttpStatus.NOT_FOUND),
     UNCATEGORIZED_EXCEPTION(9999,"Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR);
 
     ;

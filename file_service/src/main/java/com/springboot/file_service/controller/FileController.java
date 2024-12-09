@@ -48,13 +48,13 @@ public class FileController {
         return response;
     }
 
-    @PostMapping(value = "/question-group/import/questions/{questionGroupId}",produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/question-group/import/questions/{questionGroupId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
     public ApiResponse<?> importStudentsIntoQuestionGroup(@RequestPart MultipartFile file, @PathVariable(name = "questionGroupId") Long questionGroupId) {
         return fileService.importQuestionsIntoQuestionGroup(file,questionGroupId);
     }
 
-    @PostMapping(value = "/subject/import/student/{subjectId}",produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/subject/import/student/{subjectId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
     public ApiResponse<?> importStudentsIntoSubject(@RequestPart MultipartFile file, @PathVariable(name = "subjectId") Long subjectId) {
         return fileService.importStudentsIntoSubject(file,subjectId);

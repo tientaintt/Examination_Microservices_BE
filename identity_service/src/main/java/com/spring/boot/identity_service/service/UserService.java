@@ -34,4 +34,6 @@ public interface UserService {
     APIResponse<?> getAllStudentId();
 
     APIResponse<?> getAllUserByListId(List<String> userIds,int page,String column,int size,String sortType,String search);
+
+    APIResponse<?> getAllUser();
 }

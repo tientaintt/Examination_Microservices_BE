@@ -11,4 +11,6 @@ public interface NotificationService {
     NotificationResponse createNotification(NotificationRequest notificationRequest);
     void listenNotificationDelivery(NotificationEvent event);
     APIResponse<?> getAllMyNotifications(int page,String column,int size,String sortType);
+
+    APIResponse<?> readNotification(String notificationId);
 }

@@ -97,7 +97,7 @@ public class SubjectController {
         return subjectService.getAllSubjectsByStatus(search, page, column, size, sortType, true);
     }
     @GetMapping(value = "/{subjectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ApiResponse<?> getMultipleChoiceTest(
+    public ApiResponse<?> getSubjectById(
             @PathVariable(name = "subjectId") Long subjectId){
         return subjectService.
                 getSubjectById(subjectId);

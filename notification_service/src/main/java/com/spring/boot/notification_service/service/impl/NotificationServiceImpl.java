@@ -4,12 +4,15 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spring.boot.event.dto.NotificationEvent;
 import com.spring.boot.notification_service.dto.request.NotificationRequest;
+import com.spring.boot.notification_service.dto.request.SubjectNotification;
 import com.spring.boot.notification_service.dto.request.TestNotification;
 import com.spring.boot.notification_service.dto.response.APIResponse;
+import com.spring.boot.notification_service.dto.response.ListNotificationResponse;
 import com.spring.boot.notification_service.dto.response.NotificationResponse;
-import com.spring.boot.notification_service.dto.response.ListWrapper;
 import com.spring.boot.notification_service.entity.Notification;
 import com.spring.boot.notification_service.entity.NotificationMessage;
+import com.spring.boot.notification_service.exception.AppException;
+import com.spring.boot.notification_service.exception.ErrorCode;
 import com.spring.boot.notification_service.repository.NotificationMessageRepository;
 import com.spring.boot.notification_service.repository.NotificationRepository;
 import com.spring.boot.notification_service.repository.httpclient.IdentityClient;
@@ -25,14 +28,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +46,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final MailServiceImpl mailServiceImpl;
     private final IdentityClient identityClient;
     private final IdentityServiceImpl identityServiceImpl;
+    SimpMessagingTemplate messagingTemplate;
     @NonFinal
     PageUtils pageUtils;
 //    @Override
@@ -82,6 +85,10 @@ public class NotificationServiceImpl implements NotificationService {
                 .build();
 
         Notification notification1 = notificationRepository.save(notification);
+        messagingTemplate.convertAndSend(
+                "/topic/notifications/" +request.getReceiverId(),
+                notification
+        );
         log.info("Saved Notification: {}", notification1);
         return NotificationResponse.builder()
                 .id(notification1.getId())
@@ -158,18 +165,52 @@ public class NotificationServiceImpl implements NotificationService {
                 mailServiceImpl.sendEmailTestDeletedNotification(testNotification.getRegisterUserEmails(), testNotification);
             }
         }
+        else {
+            if(event.getTemplateCode().equals("ADD_TO_SUBJECT")) {
+                ObjectMapper objectMapper = new ObjectMapper();
+                SubjectNotification subjectNotification = objectMapper.convertValue(event.getParam().get("subjectNotification"), SubjectNotification.class);
+                NotificationRequest notificationRequest = NotificationRequest.builder()
+                        .senderId(event.getParam().get("senderId").toString())
+                        .receiverId(event.getParam().get("receiverId").toString())
+                        .title("Added subject")
+                        .type("ADD_TO_SUBJECT")
+                        .idOfTypeNotify(subjectNotification.getId())
+                        .build();
+                createNotification(notificationRequest);
+            }
+            else if(event.getTemplateCode().equals("REMOVE_FROM_SUBJECT")) {
+                ObjectMapper objectMapper = new ObjectMapper();
+                SubjectNotification subjectNotification = objectMapper.convertValue(event.getParam().get("subjectNotification"), SubjectNotification.class);
+                NotificationRequest notificationRequest = NotificationRequest.builder()
+                        .senderId(event.getParam().get("senderId").toString())
+                        .receiverId(event.getParam().get("receiverId").toString())
+                        .title("Removed subject")
+                        .type("REMOVE_FROM_SUBJECT")
+                        .idOfTypeNotify(subjectNotification.getId())
+                        .build();
+                createNotification(notificationRequest);
+            }
+        }
     }
 
-    @Autowired
-    private MongoTemplate mongoTemplate;
     @Override
     public APIResponse<?> getAllMyNotifications(int page, String column, int size, String sortType) {
         String userId = identityServiceImpl.getCurrentUser().getId();
-        Pageable pageable = PageUtils.createPageable(page, size, "des", "createAt");
+        final int[] totalUnread = {0};
+        Pageable pageable = PageUtils.createPageable(page, size, "des", "createdAt");
         Page<Notification> notifications = notificationRepository.findByReceiverId(userId, pageable);
-        Page<NotificationResponse> notificationResponses = notifications.map(CustomBuilder::buildNotification);
+
+        Page<NotificationResponse> notificationResponses = notifications.map(notification -> {
+            if(notification.isRead()==false)
+                totalUnread[0] = totalUnread[0] +1;
+            return CustomBuilder.buildNotification(notification);
+        });
+        ListNotificationResponse response=ListNotificationResponse.builder()
+                .totalUnreadNotifications(totalUnread[0])
+                .notifications(notificationResponses)
+                .build();
         return APIResponse.builder()
-                .data(notificationResponses)
+                .data(response)
                 .build();
 //        List<Criteria> criteria = new ArrayList<>();
 //        criteria.add(Criteria.where("receiverId").is(userId));
@@ -195,5 +236,19 @@ public class NotificationServiceImpl implements NotificationService {
 //        return APIResponse.builder()
 //                .data(wrapper)
 //                .build();
+    }
+
+    @Override
+    public APIResponse<?> readNotification(String notificationId) {
+        Optional<Notification> notification=notificationRepository.findById(notificationId);
+        if(notification.isPresent()){
+            notification.get().setRead(true);
+          Notification result=  notificationRepository.save(notification.get());
+          return APIResponse.builder()
+                  .data(CustomBuilder.buildNotification(result))
+                  .build();
+        }else {
+            throw new AppException(ErrorCode.NOTIFICATION_NOT_FOUND);
+        }
     }
 }

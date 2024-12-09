@@ -101,7 +101,7 @@ public class QuestionController {
 
     @PutMapping(value = "/active/{questionId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
-    public ApiResponse<?> activeClassroom(@PathVariable(name = "questionId") Long questionId){
+    public ApiResponse<?> activeQuestion(@PathVariable(name = "questionId") Long questionId){
         return questionService.switchQuestionStatus(questionId, true);
     }
 }

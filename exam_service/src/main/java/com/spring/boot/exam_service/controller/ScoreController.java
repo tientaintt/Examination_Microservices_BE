@@ -53,6 +53,12 @@ public class ScoreController {
             @RequestParam(defaultValue = DEFAULT_SORT_INCREASE) String sortType){
         return scoreService.getAllStudentScoreOfTest(testId, search, page, column, size, sortType);
     }
+    @GetMapping(value = "/export/exam/{testId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN','STUDENT')")
+    public ResponseEntity<InputStreamResource>  exportScoresOfExam(@PathVariable(name = "testId") Long testId){
+
+        return scoreService.exportScoresOfExam(testId);
+    }
     @GetMapping(value = "/export/{scoreId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN','STUDENT')")
     public ResponseEntity<InputStreamResource>  exportPDFScoreById(@PathVariable(name = "scoreId") Long scoreId){

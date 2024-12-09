@@ -2,6 +2,7 @@ package com.spring.boot.exam_service.service.impl;
 
 
 
+import com.spring.boot.event.dto.NotificationEvent;
 import com.spring.boot.exam_service.dto.ApiResponse;
 
 import com.spring.boot.exam_service.dto.request.*;
@@ -36,6 +37,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -60,6 +62,7 @@ public class SubjectServiceImpl implements SubjectService {
     private final SubjectRepository subjectRepository;
     private  final FileClient fileClient;
     private final MultipleChoiceTestRepository multipleChoiceTestRepository;
+    private final KafkaTemplate kafkaTemplate;
 
     @Override
     public ApiResponse<?> getNumberSubjectManager() {
@@ -228,8 +231,18 @@ public class SubjectServiceImpl implements SubjectService {
                 subjectRegistrationRepository.save(subjectRegistration);
         subject.get().getSubjectRegistrations().add(savedSubjectRegistration);
 
-        subjectRepository.save(subject.get());
-
+        Subject result=subjectRepository.save(subject.get());
+        SubjectNotification subjectNotification=CustomBuilder.buildSubjectNotification(result);
+        Map<String, Object> params = new HashMap<>();
+        params.put("subjectNotification", subjectNotification);
+        params.put("senderId",savedSubjectRegistration.getUserID());
+        params.put("receiverId",userProfile.getId());
+        NotificationEvent event = NotificationEvent.builder()
+                .channel("")
+                .templateCode("ADD_TO_SUBJECT")
+                .param(params)
+                .build();
+        kafkaTemplate.send("notification-delivery",event);
         return ApiResponse.builder().build();
     }
 
@@ -372,8 +385,19 @@ public class SubjectServiceImpl implements SubjectService {
                     .userID(studentId)
                     .build();
 
-            subjectRegistrationRepository.save(subjectRegistration);
+           SubjectRegistration savedSubjectRegistration=subjectRegistrationRepository.save(subjectRegistration);
             subject.getSubjectRegistrations().add(subjectRegistration);
+            SubjectNotification subjectNotification=CustomBuilder.buildSubjectNotification(subject);
+            Map<String, Object> params = new HashMap<>();
+            params.put("subjectNotification", subjectNotification);
+            params.put("senderId",savedSubjectRegistration.getUserID());
+            params.put("receiverId",studentId);
+            NotificationEvent event = NotificationEvent.builder()
+                    .channel("")
+                    .templateCode("ADD_TO_SUBJECT")
+                    .param(params)
+                    .build();
+            kafkaTemplate.send("notification-delivery",event);
         });
         subjectRepository.save(subject);
     }
@@ -403,6 +427,17 @@ public class SubjectServiceImpl implements SubjectService {
         UserRequest userProfile = identityService.getUserVerifiedByIdAndStatus(dto.getStudentId(), true);
         Optional<SubjectRegistration> subjectRegistration = subjectRegistrationRepository.findBySubjectIdAndUserID(subject.get().getId(), userProfile.getId());
         subjectRegistration.ifPresent(registration -> subjectRegistrationRepository.deleteById(registration.getId()));
+        SubjectNotification subjectNotification=CustomBuilder.buildSubjectNotification(subject.get());
+        Map<String, Object> params = new HashMap<>();
+        params.put("subjectNotification", subjectNotification);
+        params.put("senderId",subject.get().getUserID());
+        params.put("receiverId",userProfile.getId());
+        NotificationEvent event = NotificationEvent.builder()
+                .channel("")
+                .templateCode("REMOVE_FROM_SUBJECT")
+                .param(params)
+                .build();
+        kafkaTemplate.send("notification-delivery",event);
         return ApiResponse.builder().build();
     }
 

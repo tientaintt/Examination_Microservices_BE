@@ -17,6 +17,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -33,7 +34,11 @@ public class NotificationController {
     private static final String DEFAULT_SORT_INCREASE = "asc";
      SimpMessagingTemplate messagingTemplate;
      NotificationService notificationService;
-
+     @PostMapping("read/{notification_id}")
+     @PreAuthorize("hasAnyRole('TEACHER', 'STUDENT')")
+     public APIResponse<?> readNotification(@PathVariable("notification_id") String notificationId){
+         return notificationService.readNotification(notificationId);
+     }
      @GetMapping(value = "/my")
      public APIResponse<?> getAllMyNotifications(
                                                  @RequestParam(defaultValue = DEFAULT_PAGE) int page,
@@ -55,8 +60,6 @@ public class NotificationController {
     @PostMapping("/send")
     public void sendNotification(@RequestBody NotificationRequest request) {
         NotificationResponse notification = notificationService.createNotification(request);
-
-        // Gửi thông báo đến người nhận qua WebSocket
         messagingTemplate.convertAndSend(
                 "/topic/notifications/" +request.getReceiverId(),
                 notification

@@ -24,6 +24,6 @@ public interface UserRepository extends JpaRepository< User,String> {
     Optional<User> findOneByEmailAddressVerified(String emailAddress);
     @Query(value = "SELECT * FROM user u WHERE  u.id IN :ids AND (u.display_name like %:search% OR u.email_address like %:search%)",nativeQuery = true)
     Page<User> findAllByIdIn(List<String> ids,String search, Pageable pageable);
-
+    List<User> getAllByRolesIsNot(Role role);
     Optional<User> findOneByUsernameOrEmailAddressAndIsEmailAddressVerified(String loginName, String emailAddress, Boolean isEmailAddressVerified);
 }

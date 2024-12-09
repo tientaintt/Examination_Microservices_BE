@@ -3,6 +3,7 @@ package com.spring.boot.exam_service.utils;
 
 import com.spring.boot.exam_service.constants.Constants;
 import com.spring.boot.exam_service.constants.ErrorMessage;
+import com.spring.boot.exam_service.dto.request.SubjectNotification;
 import com.spring.boot.exam_service.dto.request.TestNotification;
 import com.spring.boot.exam_service.dto.response.*;
 import com.spring.boot.exam_service.entity.*;
@@ -218,6 +219,14 @@ public static MultipleChoiceTestWithQuestionsResponse buildMultipleChoiceTestWit
                 .dueTime(testTracking.getDueTime())
                 .multipleChoiceTestId(testTracking.getMultipleChoiceTest().getId())
                 .studentId(testTracking.getUserID())
+                .build();
+    }
+
+    public static SubjectNotification buildSubjectNotification(Subject result) {
+        return SubjectNotification.builder()
+                .id(result.getId())
+                .subjectCode(result.getSubjectCode())
+                .subjectName(result.getSubjectName())
                 .build();
     }
 }

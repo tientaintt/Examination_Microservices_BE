@@ -1,0 +1,23 @@
+
+server:
+  port: 8084
+  servlet:
+    context-path: /chat
+spring:
+  main:
+    allow-circular-references: true
+    allow-bean-definition-overriding: true
+  data:
+    mongodb:
+      #      url: mongodb+srv://root:root@cluster0.1zgpkzb.mongodb.net/?retryWrites=true&w=majority/chat_service
+      uri:  mongodb+srv://root1:root@cluster0.4pjx8.mongodb.net/chat_service
+
+  kafka:
+    bootstrap-servers: localhost:9094
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+app:
+  services:
+    identity: http://localhost:8080/identity

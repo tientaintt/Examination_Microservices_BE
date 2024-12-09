@@ -105,7 +105,11 @@ public class UserController {
         log.info(userIdsRequest.getUserIds().toString());
         return userService.getAllUserByListId(userIdsRequest.getUserIds(),page,column,size,sortType,search);
     }
+    @GetMapping(value = "/users", produces = MediaType.APPLICATION_JSON_VALUE)
+    APIResponse<?> getAllUsers(){
 
+        return userService.getAllUser();
+    }
     @GetMapping("/user/my-info")
     APIResponse<?> getMyInfo() {
         return userService.getCurrentLoggedInUser();
