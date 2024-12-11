@@ -4,6 +4,9 @@ import com.spring.boot.identity_service.dto.request.*;
 import com.spring.boot.identity_service.dto.response.APIResponse;
 import com.spring.boot.identity_service.dto.response.JwtResponse;
 import com.spring.boot.identity_service.dto.response.UserResponse;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -36,4 +39,6 @@ public interface UserService {
     APIResponse<?> getAllUserByListId(List<String> userIds,int page,String column,int size,String sortType,String search);
 
     APIResponse<?> getAllUser();
+
+    ResponseEntity<Resource> exportStudentsVerified(String typeExport);
 }

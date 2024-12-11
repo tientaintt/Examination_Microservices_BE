@@ -13,6 +13,7 @@ import com.spring.boot.exam_service.service.IdentityService;
 import com.spring.boot.exam_service.service.ScoreService;
 import com.spring.boot.exam_service.utils.CustomBuilder;
 import com.spring.boot.exam_service.utils.DateUtils;
+import com.spring.boot.exam_service.utils.ExcelUtil;
 import com.spring.boot.exam_service.utils.PageUtils;
 
 import lombok.AllArgsConstructor;
@@ -26,9 +27,8 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.PDType3Font;
 import org.apache.pdfbox.pdmodel.graphics.color.PDColor;
 import org.apache.pdfbox.pdmodel.graphics.color.PDDeviceRGB;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.InputStreamResource;
@@ -236,6 +236,155 @@ public class ScoreServiceImpl implements ScoreService {
         }
     }
 
+    @Override
+    public ResponseEntity<InputStreamResource> exportExcelScoreById(Long scoreId) {
+        Optional<Score> score = scoreRepository.findById(scoreId);
+        if (score.isEmpty()) {
+            throw new AppException(ErrorCode.SCORE_NOT_FOUND_ERROR);
+        }
+
+        List<SubmittedQuestion> submittedQuestions = submittedQuestionRepository.findAllByScoreId(score.get().getId());
+        List<SubmittedQuestionResponse> submittedQuestionResponses = submittedQuestions.stream()
+                .map(submittedQuestion -> {
+                    List<AnswerResponse> listAnswer = answerRepository.findListAnswerByIdQuestion(submittedQuestion.getQuestion().getId());
+                    String correctAnswer = answerRepository.findCorrectAnswerByIdQuestion(submittedQuestion.getQuestion().getId());
+
+                    return SubmittedQuestionResponse.builder()
+                            .id(submittedQuestion.getId())
+                            .correctAnswer(correctAnswer)
+                            .submittedAnswer(submittedQuestion.getSubmittedAnswer())
+                            .questionType(submittedQuestion.getQuestion().getQuestionType().getTypeQuestion())
+                            .answers(listAnswer)
+                            .questionId(submittedQuestion.getQuestion().getId())
+                            .content(questionRepository.getContentQuestionByQuestionId(submittedQuestion.getQuestion().getId()))
+                            .build();
+                }).toList();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (Workbook workbook = new XSSFWorkbook()) {
+            log.info("Creating workbook score detail");
+            Sheet sheet = workbook.createSheet("Score detail");
+
+
+            int i = 0;
+            Row headerRow = sheet.createRow(i);
+            String resultText = score.get().getTotalScore() >= score.get().getTargetScore() ? "Passed" : "Failed";
+            Cell resultCell = headerRow.createCell(0);
+            resultCell.setCellValue(resultText);
+            ExcelUtil.setColorGreenOrRed(resultCell,score.get().getTotalScore() >= score.get().getTargetScore());
+            i++;
+            headerRow = sheet.createRow(i);
+            String examName = "Exam name: " + score.get().getMultipleChoiceTest().getTestName();
+            headerRow.createCell(0).setCellValue(examName);
+            i++;
+            headerRow = sheet.createRow(i);
+            String submittedDate = "Submitted on: " + DateUtils.convertMillisecondsToDate(score.get().getSubmittedDate());
+            headerRow.createCell(0).setCellValue(submittedDate);
+            i++;
+            headerRow = sheet.createRow(i);
+            String totalScore = "Total score: " + score.get().getTotalScore() + "/10";
+            headerRow.createCell(0).setCellValue(totalScore);
+            i++;
+            headerRow = sheet.createRow(i);
+            headerRow.createCell(0).setCellValue("Submitted questions and answers");
+            for (SubmittedQuestionResponse question : submittedQuestionResponses) {
+                log.info(String.valueOf(i + 1));
+                Row row = sheet.createRow(i + 1);
+                row.createCell(0).setCellValue(question.getContent());
+                i++;
+                switch (question.getQuestionType()) {
+                    case "Multiple Choice", "True/False":
+                        i = writeMultipleChoiceIntoExcel(sheet, i, question.getAnswers(), question.getSubmittedAnswer(), question.getCorrectAnswer());
+                        i++;
+                        break;
+                    case "Fill in the blank":
+                        i=writeFillBlankIntoExcel(sheet,i, question.getSubmittedAnswer(),question.getCorrectAnswer());
+                        i++;
+                        break;
+
+                }
+
+
+            }
+            for (int j = 0; j < 4; j++) {
+                sheet.autoSizeColumn(j);
+            }
+            workbook.write(out);
+
+        } catch (IOException e) {
+            throw new AppException(ErrorCode.CANNOT_READ_FILE);
+        } finally {
+            try {
+                out.close();
+            } catch (IOException e) {
+                throw new AppException(ErrorCode.CANNOT_WRITE_FILE);
+            }
+        }
+        InputStreamResource resource = new InputStreamResource(new ByteArrayInputStream(out.toByteArray()));
+        String fileName = "ScoreDetail" + ".xlsx";
+        ResponseEntity<InputStreamResource> response = ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(resource);
+        return response;
+    }
+
+    private int writeMultipleChoiceIntoExcel(Sheet sheet, int rowIndex, List<AnswerResponse> answers, String submittedAnswer, String correctAnswer) {
+        String[] checkboxOptions = {"", "√"};
+
+        for (AnswerResponse answerResponse : answers) {
+
+            Row row = sheet.createRow(++rowIndex);
+            Cell answerOptionCell = row.createCell(1);
+            answerOptionCell.setCellValue(answerResponse.getAnswerContent());
+            log.info("rowIndex: " + rowIndex);
+            createDropdown(sheet, 0, rowIndex, checkboxOptions, answerResponse.getAnswerContent().equals(submittedAnswer));
+        }
+        Row row = sheet.createRow(++rowIndex);
+        Cell checkCorrect = row.createCell(0);
+        if(correctAnswer!=null && !correctAnswer.isEmpty()){
+            checkCorrect.setCellValue(correctAnswer.equals(submittedAnswer)?"Correct":"Incorrect");
+            ExcelUtil.setColorGreenOrRed(checkCorrect,correctAnswer.equals(submittedAnswer));
+        }
+        row = sheet.createRow(++rowIndex);
+        row.createCell(0).setCellValue("Correct answer: " + correctAnswer);
+        return rowIndex;
+    }
+
+    private int writeFillBlankIntoExcel(Sheet sheet, int rowIndex, String submittedAnswer, String correctAnswer) {
+        String[] checkboxOptions = {"", "√"};
+
+
+        Row row = sheet.createRow(++rowIndex);
+        Cell answerOptionCell = row.createCell(1);
+        answerOptionCell.setCellValue("Submitted answer" + submittedAnswer);
+        row = sheet.createRow(++rowIndex);
+        Cell checkCorrect = row.createCell(0);
+        if(correctAnswer!=null && !correctAnswer.isEmpty()){
+            checkCorrect.setCellValue(correctAnswer.equals(submittedAnswer)?"Correct":"Incorrect");
+            ExcelUtil.setColorGreenOrRed(checkCorrect,correctAnswer.equals(submittedAnswer));
+        }
+        row = sheet.createRow(++rowIndex);
+        row.createCell(0).setCellValue("Correct answer: " + correctAnswer);
+        return rowIndex;
+    }
+
+    public static void createDropdown(Sheet sheet, int column, int rowIndex, String[] options, boolean check) {
+
+        DataValidationHelper validationHelper = sheet.getDataValidationHelper();
+        DataValidationConstraint constraint = validationHelper.createExplicitListConstraint(options);
+        CellRangeAddressList addressList = new CellRangeAddressList(rowIndex, rowIndex, column, column);
+        DataValidation dataValidation = validationHelper.createValidation(constraint, addressList);
+
+        sheet.addValidationData(dataValidation);
+        if (check) {
+            Row row = sheet.getRow(rowIndex);
+            if (row == null) {
+                row = sheet.createRow(rowIndex);
+            }
+            Cell cell = row.createCell(column);
+            cell.setCellValue("√");
+        }
+    }
 
     float wrapText(PDDocument document, PDPageContentStream contentStream, PDType0Font font, String text, float x, float y, float maxWidth) throws IOException {
         final float lineHeight = 20;
@@ -262,7 +411,7 @@ public class ScoreServiceImpl implements ScoreService {
             lines.add(currentLine.toString());
         }
         if (y < 50) {
-            contentStream=createNewPage(document, contentStream, font);
+            contentStream = createNewPage(document, contentStream, font);
             y = 750;
         }
         // Draw the lines on the page and update yPosition
@@ -505,27 +654,31 @@ public class ScoreServiceImpl implements ScoreService {
 //                        .answers(listAnswer)
 //                        .submittedAnswer(submittedQuestion.getSubmittedAnswer())
 //                        .build();
+                if (correctAnswer != null && !correctAnswer.isEmpty()) {
 
-                String questionType = submittedQuestion.getQuestion().getQuestionType().getTypeQuestion();
-                log.info("check question type {}", questionType);
 
-                String submittedAnswer = submittedQuestion.getSubmittedAnswer();
-                log.info("check submitted answer {}", submittedAnswer);
-                submittedQuestionResponses.add(
-                        SubmittedQuestionResponse.builder()
-                                .id(submittedQuestion.getId())
-                                .correctAnswer(correctAnswer)
-                                .answers(listAnswer)
-                                .questionType(questionType)
-                                .submittedAnswer(submittedAnswer)
-                                .questionId(submittedQuestion.getQuestion().getId())
-                                .content(questionRepository.getContentQuestionByQuestionId(submittedQuestion.getQuestion().getId()))
-                                .build());
-                log.info(question.getId().toString());
-                if (answerRepository.findCorrectAnswerByIdQuestion(question.getId()).equals(item.getAnswer())) {
-                    log.info("totalScore {}", totalScore);
-                    totalScore += eachQuestionScore;
-                    totalCorrect += 1;
+                    String questionType = submittedQuestion.getQuestion().getQuestionType().getTypeQuestion();
+                    log.info("check question type {}", questionType);
+
+                    String submittedAnswer = submittedQuestion.getSubmittedAnswer();
+                    log.info("check submitted answer {}", submittedAnswer);
+                    submittedQuestionResponses.add(
+                            SubmittedQuestionResponse.builder()
+                                    .id(submittedQuestion.getId())
+                                    .correctAnswer(correctAnswer)
+                                    .answers(listAnswer)
+                                    .questionType(questionType)
+                                    .submittedAnswer(submittedAnswer)
+                                    .questionId(submittedQuestion.getQuestion().getId())
+                                    .content(questionRepository.getContentQuestionByQuestionId(submittedQuestion.getQuestion().getId()))
+                                    .build());
+                    log.info(question.getId().toString());
+
+                    if (correctAnswer.equals(item.getAnswer())) {
+                        log.info("totalScore {}", totalScore);
+                        totalScore += eachQuestionScore;
+                        totalCorrect += 1;
+                    }
                 }
             }
         }

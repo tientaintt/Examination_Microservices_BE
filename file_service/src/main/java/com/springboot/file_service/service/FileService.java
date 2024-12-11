@@ -18,27 +18,19 @@ import com.springboot.file_service.repository.httpclient.ExamClient;
 import com.springboot.file_service.utils.Constants;
 import com.springboot.file_service.utils.EnumParentFileType;
 import com.springboot.file_service.utils.Extensions;
-import jakarta.servlet.ServletOutputStream;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.ExtensionMethod;
 import lombok.experimental.FieldDefaults;
 
 
-import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.hpsf.DocumentSummaryInformation;
-import org.apache.poi.hpsf.PropertySetFactory;
-import org.apache.poi.hpsf.SummaryInformation;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.bson.types.ObjectId;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -286,4 +278,47 @@ public class FileService {
         return sb.toString();
     }
 
+    public ByteArrayInputStream exportStudentsVerified(List<UserRequest> dataExport, String typeExport) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        if ("excel".equalsIgnoreCase(typeExport)) {
+            log.info("Exporting Student Verified Excel");
+            try (Workbook workbook = new XSSFWorkbook()) {
+                Sheet sheet = workbook.createSheet("List student verified");
+                Row row = sheet.createRow(0);
+                row.createCell(0).setCellValue("Student ID");
+                row.createCell(1).setCellValue("Name");
+                row.createCell(2).setCellValue("Email");
+                row.createCell(3).setCellValue("Login Name");
+                int dataRowIndex = 1;
+
+                for (UserRequest userRequest : dataExport) {
+                    log.info(userRequest.getDisplayName());
+                    log.info(userRequest.getEmailAddress());
+                    log.info(userRequest.getLoginName());
+                    log.info(userRequest.getId());
+                    Row dataRow = sheet.createRow(dataRowIndex);
+                    dataRow.createCell(0).setCellValue(userRequest.getId());
+                    dataRow.createCell(1).setCellValue(userRequest.getDisplayName());
+                    dataRow.createCell(2).setCellValue(userRequest.getEmailAddress());
+                    dataRow.createCell(3).setCellValue(userRequest.getLoginName());
+                    dataRowIndex++;
+                }
+
+                workbook.write(out);
+                return new ByteArrayInputStream(out.toByteArray());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } finally {
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+
+        }
+        return null;
+    }
 }

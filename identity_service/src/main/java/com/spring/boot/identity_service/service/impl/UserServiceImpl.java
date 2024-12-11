@@ -34,16 +34,22 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 
@@ -93,8 +99,8 @@ public class UserServiceImpl implements UserService {
         }
 
         newUserProfile.setRoles(roles);
-      //  newUserProfile = userRepository.save(newUserProfile);
-        newUserProfile=addStudent(newUserProfile);
+        //  newUserProfile = userRepository.save(newUserProfile);
+        newUserProfile = addStudent(newUserProfile);
         // create response information to user
         AuthenticationResponse tokenDetails = authenticationService.authenticate(
                 new AuthenticationRequest(newUserProfile.getUsername(), userCreationRequest.getPassword())
@@ -226,7 +232,7 @@ public class UserServiceImpl implements UserService {
         );
         user.setResetPasswordCode(verifyCode);
         user.setResetPasswordExpiredCodeTime(Instant.now().plusSeconds(resetPasswordCodeTime * 60));
-       // userRepository.save(user);
+        // userRepository.save(user);
         updateStudent(user);
         return APIResponse.builder()
                 .data(userMapper.toUserResponse(user))
@@ -291,8 +297,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public APIResponse<?> getTotalStudents() {
-        Optional<Role> roleStudent=roleRepository.findByName("STUDENT");
-        int count=userRepository.countAllByRolesIs(roleStudent.get());
+        Optional<Role> roleStudent = roleRepository.findByName("STUDENT");
+        int count = userRepository.countAllByRolesIs(roleStudent.get());
         return APIResponse.builder().data(count).build();
     }
 
@@ -509,7 +515,7 @@ public class UserServiceImpl implements UserService {
 
 
         }
-       // userRepository.delete(targetUser.get());
+        // userRepository.delete(targetUser.get());
         deleteStudent(targetUser.get());
         log.warn(String.format("Delete user: User with id %s has been deleted by admin with id %s ", userId, userProfile.getId()));
         log.warn("Delete user: end");
@@ -517,10 +523,11 @@ public class UserServiceImpl implements UserService {
                 .message("Deleted user")
                 .build();
     }
+
     @CacheEvict(value = "userIds", allEntries = true)
     public User updateStudent(User user) {
         // Logic cập nhật thông tin sinh viên
-       return studentRepositoryRead.save(user);
+        return studentRepositoryRead.save(user);
     }
 
     @CacheEvict(value = "userIds", allEntries = true)
@@ -532,17 +539,20 @@ public class UserServiceImpl implements UserService {
     public void deleteStudent(User user) {
         studentRepositoryRead.delete(user);
     }
+
     @Override
     public APIResponse<?> getAllStudentId() {
-        List<String> userIds=getAllStudentIds();
+        List<String> userIds = getAllStudentIds();
         return APIResponse.builder().data(userIds).build();
     }
+
     @CacheEvict(value = "userIds")
     public List<String> getAllStudentIds() {
         return studentRepositoryRead.findAllStudentId();
     }
+
     @Override
-    public APIResponse<?> getAllUserByListId(List<String> userIds, int page, String column, int size, String sortType,String search) {
+    public APIResponse<?> getAllUserByListId(List<String> userIds, int page, String column, int size, String sortType, String search) {
         log.info("{} {} {} {}", page, column, size, sortType);
         Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
         Page<User> users = userRepository.findAllByIdIn(userIds, search, pageable);
@@ -590,10 +600,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public APIResponse<?> getAllUser() {
-        Optional<Role> role=roleRepository.findByName("ADMIN");
+        Optional<Role> role = roleRepository.findByName("ADMIN");
         if (role.isPresent()) {
-            List<User> users=userRepository.getAllByRolesIsNot(role.get());
-            List<UserResponse> responses=users.stream().map(user -> {
+            List<User> users = userRepository.getAllByRolesIsNot(role.get());
+            List<UserResponse> responses = users.stream().map(user -> {
                 return UserResponse.builder()
                         .id(user.getId())
                         .isEnable(user.getIsEnable())
@@ -608,6 +618,14 @@ public class UserServiceImpl implements UserService {
             return APIResponse.builder().data(responses).build();
         }
         return null;
+    }
+
+    @Override
+    public ResponseEntity<Resource> exportStudentsVerified(String typeExport) {
+        List<User> listStudents = studentRepositoryRead.findAllVerifiedStudents("%%");
+        List<UserResponse> response = listStudents.stream().map(userMapper::toUserResponse).toList();
+        log.info(response.toString());
+        return fileService.exportStudentsVerified(response, typeExport);
     }
 }
 

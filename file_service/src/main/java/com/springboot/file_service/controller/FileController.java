@@ -1,27 +1,23 @@
 package com.springboot.file_service.controller;
 
 import com.springboot.file_service.dto.request.ExportStudentOfClassRequest;
+import com.springboot.file_service.dto.request.UserRequest;
 import com.springboot.file_service.dto.response.ApiResponse;
 import com.springboot.file_service.service.FileService;
-import feign.Param;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -40,6 +36,18 @@ public class FileController {
 //         = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
         String fileName=dataExport.getClassName().replace(" ","")+".xlsx";
         ByteArrayInputStream inputStream=fileService.exportStudentOfClass(dataExport,typeExport);
+        InputStreamResource resource = new InputStreamResource(inputStream);
+        ResponseEntity<InputStreamResource> response=ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=\""+fileName+"\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(resource);
+        return response;
+    }
+    @PostMapping(value = "/export/student_verified")
+    public ResponseEntity<InputStreamResource> exportStudentsVerified(@RequestBody List<UserRequest> dataExport, @RequestParam String typeExport) {
+//         = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
+        String fileName="StudentVerified"+".xlsx";
+        ByteArrayInputStream inputStream=fileService.exportStudentsVerified(dataExport,typeExport);
         InputStreamResource resource = new InputStreamResource(inputStream);
         ResponseEntity<InputStreamResource> response=ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=\""+fileName+"\"")

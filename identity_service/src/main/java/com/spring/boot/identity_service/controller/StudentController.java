@@ -7,7 +7,10 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -72,5 +75,11 @@ public class StudentController {
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
     public APIResponse<?> getAllStudentId() {
         return userService.getAllStudentId();
+    }
+
+    @GetMapping(value = "/export/verified",produces = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Resource> exportStudentsVerified(@RequestParam String typeExport){
+        return userService.exportStudentsVerified(typeExport);
     }
 }

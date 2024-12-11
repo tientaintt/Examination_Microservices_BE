@@ -1,7 +1,6 @@
 package com.spring.boot.exam_service.service.impl;
 
 
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.spring.boot.exam_service.dto.ApiResponse;
 import com.spring.boot.exam_service.dto.request.CreateQuestionGroupDTO;
 import com.spring.boot.exam_service.dto.request.UpdateQuestionGroupDTO;
@@ -50,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Service
@@ -212,7 +212,7 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
                                         .content(questionText)
                                         .questionGroup(questionGroup.get())
                                         .build();
-                                Question finalQuestion = questionRepository.save(question);
+
 
                                 List<String> listAnswerContent = Arrays.stream(answers.split("\\|"))
                                         .map(String::trim)
@@ -230,38 +230,48 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
                                 if (listCorrectAnswer.isEmpty()) {
                                     throw new AppException(ErrorCode.NO_CORRECT_ANSWER_FOUND);
                                 }
-
-
+                                AtomicBoolean isCheckCorrect = new AtomicBoolean(false);
                                 listAnswerContent.forEach(answerContent -> {
-                                    if(answerContent.isBlank()){
-                                        throw new AppException(ErrorCode.NO_CORRECT_ANSWER_FOUND);
-                                    }
-                                    Optional<Answer> answerOptional = answerRepository.findByAnswer(answerContent);
-                                    Answer answer;
-
-                                    if (answerOptional.isEmpty()) {
-
-                                        answer = answerRepository.save(
-                                                Answer.builder().answer(answerContent).build()
-                                        );
-                                    } else {
-
-                                        answer = answerOptional.get();
-                                    }
-
+                                            if (answerContent.isBlank()) {
+                                                throw new AppException(ErrorCode.NO_CORRECT_ANSWER_FOUND);
+                                            }
                                     boolean isCorrect = listCorrectAnswer.contains(answerContent);
-                                    log.info("Is correct {}",String.valueOf(isCorrect));
-                                    answerQuestionRepository.save(
-                                            AnswerQuestion.builder()
-                                                    .answer(answer)
-                                                    .question(finalQuestion)
-                                                    .isCorrect(isCorrect)
-                                                    .build()
-                                    );
-                                });
+                                            if(isCorrect){
+                                                isCheckCorrect.set(true);
+                                            }
+                                        });
+                                if(isCheckCorrect.get()){
+                                    Question finalQuestion = questionRepository.save(question);
+                                    listAnswerContent.forEach(answerContent -> {
+                                        if(answerContent.isBlank()){
+                                            throw new AppException(ErrorCode.NO_CORRECT_ANSWER_FOUND);
+                                        }
+                                        Optional<Answer> answerOptional = answerRepository.findByAnswer(answerContent);
+                                        Answer answer;
 
+                                        if (answerOptional.isEmpty()) {
 
-                                questions.add(finalQuestion);
+                                            answer = answerRepository.save(
+                                                    Answer.builder().answer(answerContent).build()
+                                            );
+                                        } else {
+
+                                            answer = answerOptional.get();
+                                        }
+
+                                        boolean isCorrect = listCorrectAnswer.contains(answerContent);
+                                        log.info("Is correct {}",String.valueOf(isCorrect));
+
+                                        answerQuestionRepository.save(
+                                                AnswerQuestion.builder()
+                                                        .answer(answer)
+                                                        .question(finalQuestion)
+                                                        .isCorrect(isCorrect)
+                                                        .build()
+                                        );
+                                    });
+                                    questions.add(finalQuestion);
+                                }
                             }
                         } else {
                             throw new AppException(ErrorCode.QUESTION_GROUP_NOT_FOUND_ERROR);
@@ -325,7 +335,7 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
                 headerRow.createCell(0).setCellValue("Question");
                 headerRow.createCell(1).setCellValue("Question type");
                 headerRow.createCell(2).setCellValue("Answer");
-                headerRow.createCell(3).setCellValue("Correct Answer");
+                headerRow.createCell(3).setCellValue("Correct answer");
 
                 int i = 0;
                 for (QuestionResponse question : questionList) {

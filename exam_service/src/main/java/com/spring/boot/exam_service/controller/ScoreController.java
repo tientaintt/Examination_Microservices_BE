@@ -59,14 +59,19 @@ public class ScoreController {
 
         return scoreService.exportScoresOfExam(testId);
     }
-    @GetMapping(value = "/export/{scoreId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/export/pdf/{scoreId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN','STUDENT')")
     public ResponseEntity<InputStreamResource>  exportPDFScoreById(@PathVariable(name = "scoreId") Long scoreId){
 
         return scoreService.exportPDFScoreById(scoreId);
     }
 
+    @GetMapping(value = "/export/excel/{scoreId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN','STUDENT')")
+    public ResponseEntity<InputStreamResource>  exportExcelScoreById(@PathVariable(name = "scoreId") Long scoreId){
 
+        return scoreService.exportExcelScoreById(scoreId);
+    }
     @PostMapping(value = "/student", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
     public ApiResponse<?> getScoreOfStudent(@Valid @RequestBody GetScoreOfStudentDTO dto,

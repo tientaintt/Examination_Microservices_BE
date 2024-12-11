@@ -36,4 +36,6 @@ public interface SubjectService {
     ApiResponse<?> removeStudentFromSubject(AddToSubjectDTO dto);
 
     ResponseEntity<Resource> exportStudentsOfSubject(Long subjectId, String typeExport);
+
+
 }

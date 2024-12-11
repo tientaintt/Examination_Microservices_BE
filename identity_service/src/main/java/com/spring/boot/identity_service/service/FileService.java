@@ -4,18 +4,28 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spring.boot.identity_service.dto.request.FileRequest;
+import com.spring.boot.identity_service.dto.response.UserResponse;
 import com.spring.boot.identity_service.repository.httpclient.FileClient;
 import com.spring.boot.identity_service.util.JsonParserUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -56,5 +66,11 @@ log.info(fileClient.saveFile(file,parentId,parentType).getData().toString());
         }
 
         return fileRequest;
+    }
+
+
+    public ResponseEntity<Resource> exportStudentsVerified(List<UserResponse> dataExport, String typeExport) {
+
+        return fileClient.exportStudentsVerified(dataExport,typeExport);
     }
 }

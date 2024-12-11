@@ -68,7 +68,22 @@ public interface StudentRepositoryRead extends JpaRepository<User, String> {
             "AND (u.display_name LIKE :searchText OR u.email_address LIKE :searchText)",
             nativeQuery = true)
     Page<User> findAllVerifiedStudents(String searchText, Pageable pageable);
-
+    @Query(value = "SELECT * FROM user u " +
+            "WHERE u.is_email_address_verified = true " +
+            "AND u.is_enable = true " +
+            "AND EXISTS (" +
+            "   SELECT 1 FROM user_roles ur " +
+            "   WHERE ur.user_id = u.id " +
+            "   AND ur.roles_name = 'STUDENT'" +
+            ") " +
+            "AND NOT EXISTS (" +
+            "   SELECT 1 FROM user_roles ur " +
+            "   WHERE ur.user_id = u.id " +
+            "   AND ur.roles_name = 'TEACHER'" +
+            ") " +
+            "AND (u.display_name LIKE :searchText OR u.email_address LIKE :searchText)",
+            nativeQuery = true)
+    List<User> findAllVerifiedStudents(String searchText);
     @Query(value = "SELECT u.id FROM user u " +
             "WHERE u.is_email_address_verified = true " +
             "AND u.is_enable = true " +

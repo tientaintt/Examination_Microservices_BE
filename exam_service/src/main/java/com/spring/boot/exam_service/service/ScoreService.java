@@ -15,7 +15,7 @@ public interface ScoreService {
    ApiResponse<?> getScoreOfStudent(String studentId,Long multipleChoiceTestId,int page,String column,int size,String sortType);
    ResponseEntity<InputStreamResource> exportPDFScoreById(Long scoreId);
 
-
+   ResponseEntity<InputStreamResource> exportExcelScoreById(Long scoreId);
    ApiResponse<?> getAllScoreOfStudent( String userID,String search, Long dateFrom, Long dateTo, int page, String column, int size, String sortType);
 
    ResponseEntity<InputStreamResource> exportScoresOfExam(Long testId);
