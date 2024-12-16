@@ -52,7 +52,8 @@ public enum ErrorCode {
     NO_CORRECT_ANSWER_FOUND(1039,"No correct answer provided for the question.",HttpStatus.NOT_FOUND),
     QUESTION_CONTENT_NOT_FOUND_ERROR(1040,"Question content not found",HttpStatus.NOT_FOUND),
     DATA_IMPORT_ERROR(1041,"Data import error",HttpStatus.NOT_FOUND),
-    STUDENT_IDS_ERROR(1042,"List data student id is correct",HttpStatus.NOT_FOUND),
+    STUDENT_IDS_ERROR(1042,"List data student id is incorrect",HttpStatus.NOT_FOUND),
+    CANNOT_FIND_TEST_TRACKING(1043,"Can't find test tracking.",HttpStatus.NOT_FOUND),
     UNCATEGORIZED_EXCEPTION(9999,"Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR);
 
 

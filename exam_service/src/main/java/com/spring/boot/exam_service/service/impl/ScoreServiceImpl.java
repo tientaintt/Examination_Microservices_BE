@@ -687,9 +687,9 @@ public class ScoreServiceImpl implements ScoreService {
         score = scoreRepository.save(score);
 
         // Delete test tracking
-        Optional<TestTracking> testTracking = testTrackingRepository.findByMultipleChoiceTestIdAndUserID(
-                multipleChoiceTestOp.get().getId(), userProfile.getId());
-        testTrackingRepository.delete(testTracking.get());
+//        Optional<TestTracking> testTracking = testTrackingRepository.findByMultipleChoiceTestIdAndUserID(
+//                multipleChoiceTestOp.get().getId(), userProfile.getId());
+//        testTrackingRepository.delete(testTracking.get());
 
         ScoreResponse response = ScoreResponse.builder()
                 .id(score.getId())

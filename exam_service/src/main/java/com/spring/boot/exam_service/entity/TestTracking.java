@@ -3,6 +3,7 @@ package com.spring.boot.exam_service.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
 
 
 @Setter
@@ -27,4 +28,10 @@ public class TestTracking {
     private Long firstTimeAccess;
 
     private Long dueTime;
+
+    @OneToMany(
+            mappedBy = "testTracking",
+            cascade = CascadeType.ALL
+    )
+    private List<TrackEvent> trackEvents;
 }

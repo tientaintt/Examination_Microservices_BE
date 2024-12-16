@@ -32,8 +32,8 @@ public class ChatController {
 
     @GetMapping(value = "/senders/to/{receiverId}")
     @PreAuthorize("hasAnyRole('TEACHER', 'STUDENT')")
-    public APIResponse<?> getUnreadMessagesByReceiverId( @PathVariable("receiverId") String receiverId, @RequestParam(defaultValue = "0") int page,@RequestParam(defaultValue = "0") int size) {
-        return  chatMessageService.getUnreadMessagesByReceiverId(receiverId,page,size);
+    public APIResponse<?> getUnreadMessagesByReceiverId( @PathVariable("receiverId") String receiverId, @RequestParam(defaultValue = "0") int page,@RequestParam(defaultValue = "0") int size,@RequestParam(defaultValue = "") String search) {
+        return  chatMessageService.getUnreadMessagesByReceiverId(receiverId,search,page,size);
     }
 
 

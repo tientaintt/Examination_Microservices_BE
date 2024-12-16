@@ -27,6 +27,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
@@ -87,7 +89,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     }
 
     @Override
-    public APIResponse<?> getUnreadMessagesByReceiverId(String receiverId, int page, int size) {
+    public APIResponse<?> getUnreadMessagesByReceiverId(String receiverId,String searchText, int page, int size) {
         List<UserRequest> allSender = identityService.getAllUser();
         Aggregation aggregation = newAggregation(
                 match(Criteria.where("receiverId").is(receiverId).and("read").is(false)),
@@ -137,6 +139,18 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         List<SenderResponse> finalResult = responseMap.values().stream()
                 .filter(senderResponse -> !senderResponse.getId().equals(receiverId)).
                 toList();
+
+        String regex = ".*"+searchText+".*";
+        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CHARACTER_CLASS); // CASE_INSENSITIVE để không phân biệt hoa thường
+
+        List<SenderResponse> filteredList = new ArrayList<>();
+        for (SenderResponse sender : finalResult) {
+            Matcher matcher = pattern.matcher(sender.getDisplayName());
+            if (matcher.find()) {
+                filteredList.add(sender);
+            }
+        }
+        finalResult=filteredList;
         int totalItems = finalResult.size();
 
         int fromIndex = page * size;

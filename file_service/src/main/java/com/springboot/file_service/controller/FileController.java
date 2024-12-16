@@ -1,6 +1,7 @@
 package com.springboot.file_service.controller;
 
 import com.springboot.file_service.dto.request.ExportStudentOfClassRequest;
+import com.springboot.file_service.dto.request.TrackEventRequest;
 import com.springboot.file_service.dto.request.UserRequest;
 import com.springboot.file_service.dto.response.ApiResponse;
 import com.springboot.file_service.service.FileService;
@@ -48,6 +49,18 @@ public class FileController {
 //         = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
         String fileName="StudentVerified"+".xlsx";
         ByteArrayInputStream inputStream=fileService.exportStudentsVerified(dataExport,typeExport);
+        InputStreamResource resource = new InputStreamResource(inputStream);
+        ResponseEntity<InputStreamResource> response=ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=\""+fileName+"\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(resource);
+        return response;
+    }
+    @PostMapping(value = "/export/track_event")
+    public ResponseEntity<InputStreamResource> exportTrackEvent(@RequestBody List<TrackEventRequest> dataExport, @RequestParam String typeExport) {
+//         = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
+        String fileName="StudentVerified"+".xlsx";
+        ByteArrayInputStream inputStream=fileService.exportTrackEvent(dataExport,typeExport);
         InputStreamResource resource = new InputStreamResource(inputStream);
         ResponseEntity<InputStreamResource> response=ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=\""+fileName+"\"")

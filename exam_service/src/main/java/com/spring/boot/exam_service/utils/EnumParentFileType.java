@@ -1,4 +1,4 @@
-package com.spring.boot.identity_service.util;
+package com.spring.boot.exam_service.utils;
 
 public enum EnumParentFileType {
     COURSE_VIDEO,

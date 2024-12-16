@@ -9,5 +9,5 @@ public interface ChatMessageService {
 
     APIResponse<?> getMessages(String senderId, String receiverId);
 
-    APIResponse<?> getUnreadMessagesByReceiverId(String receiverId, int page, int size);
+    APIResponse<?> getUnreadMessagesByReceiverId(String receiverId,String searchText, int page, int size);
 }

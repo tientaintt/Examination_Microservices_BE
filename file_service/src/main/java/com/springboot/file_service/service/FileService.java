@@ -7,6 +7,7 @@ import com.google.api.services.drive.model.Permission;
 
 import com.springboot.file_service.dto.request.ExportStudentOfClassRequest;
 import com.springboot.file_service.dto.request.FileRelationshipDTO;
+import com.springboot.file_service.dto.request.TrackEventRequest;
 import com.springboot.file_service.dto.request.UserRequest;
 import com.springboot.file_service.dto.response.ApiResponse;
 import com.springboot.file_service.entity.FileRelationship;
@@ -196,8 +197,7 @@ public class FileService {
     }
 
     public FileRelationshipDTO saveFile(MultipartFile multipartFile, String parentId, String parentType) {
-        //Todo: chưa validate tồn tại parentId
-//        validateUploadFile(parentId, parentType);
+
         String userId = identityService.getCurrentUser().getId();
         if (parentType == EnumParentFileType.USER_AVATAR.name()) {
             String idImage = fileRelationshipRepository.findAllByParentIdAndParentType(userId, parentType).getFileId();
@@ -302,6 +302,41 @@ public class FileService {
                     dataRow.createCell(1).setCellValue(userRequest.getDisplayName());
                     dataRow.createCell(2).setCellValue(userRequest.getEmailAddress());
                     dataRow.createCell(3).setCellValue(userRequest.getLoginName());
+                    dataRowIndex++;
+                }
+
+                workbook.write(out);
+                return new ByteArrayInputStream(out.toByteArray());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } finally {
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+
+        }
+        return null;
+    }
+
+    public ByteArrayInputStream exportTrackEvent(List<TrackEventRequest> dataExport, String typeExport) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        if ("excel".equalsIgnoreCase(typeExport)) {
+            try (Workbook workbook = new XSSFWorkbook()) {
+                Sheet sheet = workbook.createSheet("Log event");
+                Row row = sheet.createRow(0);
+                row.createCell(0).setCellValue("Log event do exam");
+
+                int dataRowIndex = 1;
+
+                for (TrackEventRequest eventRequest  : dataExport) {
+
+                    Row dataRow = sheet.createRow(dataRowIndex);
+                    dataRow.createCell(0).setCellValue(eventRequest.toString());
+
                     dataRowIndex++;
                 }
 
