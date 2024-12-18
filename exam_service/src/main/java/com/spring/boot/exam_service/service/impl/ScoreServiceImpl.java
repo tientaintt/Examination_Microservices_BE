@@ -9,6 +9,7 @@ import com.spring.boot.exam_service.entity.*;
 import com.spring.boot.exam_service.exception.AppException;
 import com.spring.boot.exam_service.exception.ErrorCode;
 import com.spring.boot.exam_service.repository.*;
+import com.spring.boot.exam_service.repository.httpclient.FileClient;
 import com.spring.boot.exam_service.service.IdentityService;
 import com.spring.boot.exam_service.service.ScoreService;
 import com.spring.boot.exam_service.utils.CustomBuilder;
@@ -62,6 +63,7 @@ public class ScoreServiceImpl implements ScoreService {
     private final TestQuestionRepository testQuestionRepository;
 
     private final TestTrackingRepository testTrackingRepository;
+    private final FileClient fileClient;
 
     @Override
     public ApiResponse<?> getScoreOfStudent(String studentId, Long multipleChoiceTestId, int page, String column, int size, String sortType) {
@@ -82,12 +84,15 @@ public class ScoreServiceImpl implements ScoreService {
                     List<AnswerResponse> listAnswer = answerRepository.findListAnswerByIdQuestion(submittedQuestion.getQuestion().getId());
                     String correctAnswer = answerRepository.findCorrectAnswerByIdQuestion(submittedQuestion.getQuestion().getId());
 
+                    String imageUrl = fileClient.getFileRelationshipsByParentIds(Collections.singletonList(submittedQuestion.getQuestion().getQuestionId())).getData().stream().findFirst().map(fileRelationship -> fileRelationship.getPath_file()).orElse(null);
+
                     return SubmittedQuestionResponse.builder()
                             .id(submittedQuestion.getId())
                             .correctAnswer(correctAnswer)
                             .submittedAnswer(submittedQuestion.getSubmittedAnswer())
                             .questionType(submittedQuestion.getQuestion().getQuestionType().getTypeQuestion())
                             .answers(listAnswer)
+                            .imageUrl(imageUrl)
                             .questionId(submittedQuestion.getQuestion().getId())
                             .content(questionRepository.getContentQuestionByQuestionId(submittedQuestion.getQuestion().getId()))
                             .build();
@@ -248,13 +253,14 @@ public class ScoreServiceImpl implements ScoreService {
                 .map(submittedQuestion -> {
                     List<AnswerResponse> listAnswer = answerRepository.findListAnswerByIdQuestion(submittedQuestion.getQuestion().getId());
                     String correctAnswer = answerRepository.findCorrectAnswerByIdQuestion(submittedQuestion.getQuestion().getId());
-
+                    String imageUrl = fileClient.getFileRelationshipsByParentIds(Collections.singletonList(submittedQuestion.getQuestion().getQuestionId())).getData().stream().findFirst().map(fileRelationship -> fileRelationship.getPath_file()).orElse(null);
                     return SubmittedQuestionResponse.builder()
                             .id(submittedQuestion.getId())
                             .correctAnswer(correctAnswer)
                             .submittedAnswer(submittedQuestion.getSubmittedAnswer())
                             .questionType(submittedQuestion.getQuestion().getQuestionType().getTypeQuestion())
                             .answers(listAnswer)
+                            .imageUrl(imageUrl)
                             .questionId(submittedQuestion.getQuestion().getId())
                             .content(questionRepository.getContentQuestionByQuestionId(submittedQuestion.getQuestion().getId()))
                             .build();
@@ -290,6 +296,8 @@ public class ScoreServiceImpl implements ScoreService {
                 log.info(String.valueOf(i + 1));
                 Row row = sheet.createRow(i + 1);
                 row.createCell(0).setCellValue(question.getContent());
+                if(question.getImageUrl()!=null)
+                     row.createCell(1).setCellValue(question.getImageUrl());
                 i++;
                 switch (question.getQuestionType()) {
                     case "Multiple Choice", "True/False":
@@ -351,12 +359,10 @@ public class ScoreServiceImpl implements ScoreService {
     }
 
     private int writeFillBlankIntoExcel(Sheet sheet, int rowIndex, String submittedAnswer, String correctAnswer) {
-        String[] checkboxOptions = {"", "√"};
-
 
         Row row = sheet.createRow(++rowIndex);
-        Cell answerOptionCell = row.createCell(1);
-        answerOptionCell.setCellValue("Submitted answer" + submittedAnswer);
+        Cell answerOptionCell = row.createCell(0);
+        answerOptionCell.setCellValue("Submitted answer: " + submittedAnswer);
         row = sheet.createRow(++rowIndex);
         Cell checkCorrect = row.createCell(0);
         if(correctAnswer!=null && !correctAnswer.isEmpty()){

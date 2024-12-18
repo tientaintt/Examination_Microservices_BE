@@ -1,6 +1,7 @@
 package com.springboot.file_service.controller;
 
 import com.springboot.file_service.dto.request.ExportStudentOfClassRequest;
+import com.springboot.file_service.dto.request.FileUploadRequest;
 import com.springboot.file_service.dto.request.TrackEventRequest;
 import com.springboot.file_service.dto.request.UserRequest;
 import com.springboot.file_service.dto.response.ApiResponse;
@@ -26,11 +27,32 @@ import java.util.List;
 @Slf4j
 public class FileController {
     FileService fileService;
-    @PostMapping(value = "/upload",produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse<?> saveFile(@RequestPart MultipartFile file, @RequestParam String parentId, @RequestParam  String parentType) {
-        return ApiResponse.builder().data(fileService.saveFile(file,parentId,parentType)).build();
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER', 'STUDENT')")
+    @DeleteMapping("/delete/{id}")
+    public void deleteFile(@PathVariable(value = "id") String id) throws Exception {
+        fileService.deleteFile(id);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'TEACHER', 'STUDENT')")
+    @DeleteMapping("/delete")
+    public void deleteFileByPathFile(@RequestParam(value = "path_file") String pathFile) {
+        fileService.deleteFileByPathFile(pathFile);
+    }
+    @PostMapping(value = "/get",produces = MediaType.APPLICATION_JSON_VALUE)
+    public ApiResponse<?> getFileRelationshipsByParentIds(@RequestBody List<String> parentIds) {
+        return ApiResponse.builder().data(fileService.getFileRelationshipsByParentIds(parentIds)).build();
+    }
+
+    @PostMapping(value = "/uploads",produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<?> saveFiles(@RequestPart FileUploadRequest file) {
+        return ApiResponse.builder().data(fileService.saveFiles(file)).build();
+    }
+
+    @PostMapping(value = "/upload",produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<?> saveFile(@RequestPart MultipartFile file, @RequestParam String parentId,@RequestParam String parentType) {
+        return ApiResponse.builder().data(fileService.saveFile(file,parentId,parentType)).build();
+    }
 
     @PostMapping(value = "/export/student_of_class")
     public ResponseEntity<InputStreamResource> exportStudentOfClass(@RequestBody ExportStudentOfClassRequest dataExport, @RequestParam String typeExport) {

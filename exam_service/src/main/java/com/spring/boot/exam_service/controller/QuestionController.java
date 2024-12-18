@@ -12,7 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.multipart.MultipartFile;
 
 
 @Validated
@@ -86,6 +86,11 @@ public class QuestionController {
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
     public ApiResponse<?> createQuestion(@Valid @RequestBody CreateQuestionDTO DTO){
         return questionService.createQuestion(DTO);
+    }
+    @PostMapping(value = "/create/v2", produces = MediaType.APPLICATION_JSON_VALUE,consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")
+    public ApiResponse<?> createQuestionV2(@RequestPart MultipartFile file, @Valid @RequestPart("question") CreateQuestionDTO DTO){
+        return questionService.createQuestionV2(file, DTO);
     }
     @PutMapping(value = "/update/{questionId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('TEACHER', 'ADMIN')")

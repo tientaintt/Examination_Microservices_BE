@@ -141,6 +141,7 @@ public static MultipleChoiceTestWithQuestionsResponse buildMultipleChoiceTestWit
         return QuestionResponse.builder()
                 .id(question.getId())
                 .content(question.getContent())
+                .questionId(question.getQuestionId())
                 .questionType(question.getQuestionType().getTypeQuestion())
                 .answers(answers)
                 .build();

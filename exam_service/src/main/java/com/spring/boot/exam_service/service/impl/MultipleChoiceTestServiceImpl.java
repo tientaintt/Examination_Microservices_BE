@@ -10,6 +10,7 @@ import com.spring.boot.exam_service.entity.*;
 import com.spring.boot.exam_service.exception.AppException;
 import com.spring.boot.exam_service.exception.ErrorCode;
 import com.spring.boot.exam_service.repository.*;
+import com.spring.boot.exam_service.repository.httpclient.FileClient;
 import com.spring.boot.exam_service.repository.httpclient.NotificationClient;
 import com.spring.boot.exam_service.service.IdentityService;
 import com.spring.boot.exam_service.service.MultipleChoiceTestService;
@@ -51,9 +52,10 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
     ScoreRepository scoreRepository;
     private final NotificationClient notificationClient;
     private final KafkaTemplate kafkaTemplate;
+    private final FileClient fileClient;
 
     @Override
-    public ApiResponse<?> getMultipleChoiceTest(Long testId,int page, String column, int size, String sortType) {
+    public ApiResponse<?> getMultipleChoiceTest(Long testId, int page, String column, int size, String sortType) {
         Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
         String myId = identityService.getCurrentUser().getId();
         Optional<MultipleChoiceTest> multipleChoiceTestOp = multipleChoiceTestRepository.findById(testId);
@@ -63,9 +65,21 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
         MultipleChoiceTest multipleChoiceTest = multipleChoiceTestOp.get();
         List<Long> questionIds = testQuestionRepository.findQuestionIdsOfTest(multipleChoiceTest.getId());
         Collections.shuffle(questionIds);
-        Page<Question> questions = questionRepository.findAllByIds(questionIds,pageable);
+        Page<Question> questions = questionRepository.findAllByIds(questionIds, pageable);
         Page<QuestionResponse> questionsOfTheTest =
-                questions.map(question -> CustomBuilder.buildQuestionResponse(question,answerRepository.findListAnswerByIdQuestion(question.getId())));
+                questions.map(question -> {
+                    List<AnswerResponse> answerResponseList=answerRepository.findListAnswerByIdQuestion(question.getId());
+                    answerResponseList.stream().forEach(answerResponse -> log.info(answerResponse.getAnswerContent().toString()));
+                    Collections.shuffle(answerResponseList);
+                    answerResponseList.stream().forEach(answerResponse -> log.info(answerResponse.getAnswerContent().toString()));
+
+                    QuestionResponse response = CustomBuilder.buildQuestionResponse(question,answerResponseList);
+
+                    String imageUrl = fileClient.getFileRelationshipsByParentIds(Collections.singletonList(question.getQuestionId())).getData().stream().findFirst().map(fileRelationship -> fileRelationship.getPath_file()).orElse(null);
+
+                    response.setImageUrl(imageUrl);
+                    return response;
+                });
         MultipleChoiceTestWithQuestionsResponse response =
                 CustomBuilder.buildMultipleChoiceTestWithQuestionsResponse(multipleChoiceTest, questionsOfTheTest);
         Optional<Score> score = scoreRepository.findByMultipleChoiceTestIdAndUserID(response.getId(), myId);
@@ -117,14 +131,14 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
         String myId = identityService.getCurrentUser().getId();
         Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
         String searchText = "%" + search.trim() + "%";
-        Page<MultipleChoiceTest> mct ;
-        if(Objects.nonNull(endOfDate)){
+        Page<MultipleChoiceTest> mct;
+        if (Objects.nonNull(endOfDate)) {
             mct =
-                    multipleChoiceTestRepository.findMCTestOfSubjectManagerByDay(myId,startOfDate,endOfDate,searchText, pageable);
+                    multipleChoiceTestRepository.findMCTestOfSubjectManagerByDay(myId, startOfDate, endOfDate, searchText, pageable);
 
         } else {
             mct = multipleChoiceTestRepository.
-                    findNotEndedMultipleChoiceTestsManagement(myId,startOfDate, searchText, pageable);
+                    findNotEndedMultipleChoiceTestsManagement(myId, startOfDate, searchText, pageable);
         }
         Page<MultipleChoiceTestResponse> response = mct.map(CustomBuilder::buildMultipleChoiceTestResponse);
         return ApiResponse.builder().data(response).build();
@@ -133,18 +147,18 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
     @Override
     public ApiResponse<?> getMyMultipleChoiceTestsToday(Long startOfDate, Long endOfDate, String search, int page, String column, int size, String sortType) {
 
-        String  myId = identityService.getCurrentUser().getId();
+        String myId = identityService.getCurrentUser().getId();
         Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
         String searchText = "%" + search.trim() + "%";
-        Page<MyMultipleChoiceTestResponse> response ;
-        if(Objects.nonNull(endOfDate)){
+        Page<MyMultipleChoiceTestResponse> response;
+        if (Objects.nonNull(endOfDate)) {
             response =
-                    multipleChoiceTestRepository.findMCTestByDay(myId, startOfDate ,endOfDate,searchText,pageable);
+                    multipleChoiceTestRepository.findMCTestByDay(myId, startOfDate, endOfDate, searchText, pageable);
         } else {
             response = multipleChoiceTestRepository.
-                    findMyNotEndedMultipleChoiceTests(myId,startOfDate, searchText, pageable);
+                    findMyNotEndedMultipleChoiceTests(myId, startOfDate, searchText, pageable);
         }
-        response.forEach((item)->{
+        response.forEach((item) -> {
             Optional<Score> score = scoreRepository.findByMultipleChoiceTestIdAndUserID(item.getId(), myId);
             if (score.isPresent()) {
                 item.setIsSubmitted(Boolean.TRUE);
@@ -155,31 +169,29 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
 
     @Override
     public ApiResponse<?> getInfoMultipleChoiceTest(Long testId) {
-        String  myId = identityService.getCurrentUser().getId();
+        String myId = identityService.getCurrentUser().getId();
         MyMultipleChoiceTestResponse response =
                 multipleChoiceTestRepository.findMultipleChoiceTestInformation(testId, myId);
         if (Objects.isNull(response)) {
-           throw new AppException(ErrorCode.MULTIPLE_CHOICE_NOT_FOUND_ERROR);
+            throw new AppException(ErrorCode.MULTIPLE_CHOICE_NOT_FOUND_ERROR);
         }
         return ApiResponse.builder().data(response).build();
     }
 
 
-
-
     @Override
     public ApiResponse<?> getMyMultipleChoiceTests(boolean isEnded, String search, int page, String column, int size, String sortType) {
-        String  myId =identityService.getCurrentUser().getId();
+        String myId = identityService.getCurrentUser().getId();
         Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
         String searchText = "%" + search.trim() + "%";
         Long unixTimeNow = Timestamp.from(ZonedDateTime.now().toInstant()).getTime();
         Page<MyMultipleChoiceTestResponse> multipleChoiceTests;
         if (isEnded) {
             multipleChoiceTests = multipleChoiceTestRepository.
-                    findMyEndedMultipleChoiceTests(myId,unixTimeNow, searchText, pageable);
+                    findMyEndedMultipleChoiceTests(myId, unixTimeNow, searchText, pageable);
         } else {
             multipleChoiceTests = multipleChoiceTestRepository.
-                    findMyNotEndedMultipleChoiceTests(myId,unixTimeNow, searchText, pageable);
+                    findMyNotEndedMultipleChoiceTests(myId, unixTimeNow, searchText, pageable);
         }
         return ApiResponse.builder().data(multipleChoiceTests).build();
 
@@ -212,8 +224,8 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
     public ApiResponse<?> getMyMultipleChoiceTestsOfClassroom(Long subjectId, boolean isEnded, String search, int page, String column, int size, String sortType) {
         String myId = identityService.getCurrentUser().getId();
         Pageable pageable = PageUtils.createPageable(page, size, sortType, column);
-        Optional<Subject> classRoom =  subjectRepository.findById(subjectId);
-        if (classRoom.isEmpty()){
+        Optional<Subject> classRoom = subjectRepository.findById(subjectId);
+        if (classRoom.isEmpty()) {
             throw new AppException(ErrorCode.SUBJECT_NOT_FOUND);
         }
         String searchText = "%" + search.trim() + "%";
@@ -221,14 +233,14 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
         Page<MultipleChoiceTest> multipleChoiceTests;
         if (isEnded) {
             multipleChoiceTests = multipleChoiceTestRepository.
-                    findEndedMultipleChoiceTestOfClassroomByClassroomId(subjectId,unixTimeNow, searchText, pageable);
+                    findEndedMultipleChoiceTestOfClassroomByClassroomId(subjectId, unixTimeNow, searchText, pageable);
         } else {
             multipleChoiceTests = multipleChoiceTestRepository.
-                    findNotEndedMultipleChoiceTestOfClassroomByClassroomId(subjectId,unixTimeNow, searchText, pageable);
+                    findNotEndedMultipleChoiceTestOfClassroomByClassroomId(subjectId, unixTimeNow, searchText, pageable);
         }
         Page<MultipleChoiceTestResponse> response = multipleChoiceTests.map(CustomBuilder::buildMultipleChoiceTestResponse);
 
-        response.forEach((item)->{
+        response.forEach((item) -> {
             Optional<Score> score = scoreRepository.findByMultipleChoiceTestIdAndUserID(item.getId(), myId);
             item.setIsSubmitted(score.isPresent());
         });
@@ -239,13 +251,13 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
     @Override
     public ApiResponse<?> updateMultipleChoiceTest(Long testId, UpdateMultipleChoiceTestDTO dto) {
         Optional<MultipleChoiceTest> multipleChoiceTestOp = multipleChoiceTestRepository.findById(testId);
-        if(multipleChoiceTestOp.isEmpty()) {
+        if (multipleChoiceTestOp.isEmpty()) {
             throw new AppException(ErrorCode.MULTIPLE_CHOICE_NOT_FOUND_ERROR);
         }
         MultipleChoiceTest multipleChoiceTest = multipleChoiceTestOp.get();
 
         Long unixTimeNow = Timestamp.from(ZonedDateTime.now().toInstant()).getTime();
-        if(multipleChoiceTest.getStartDate() < unixTimeNow) {
+        if (multipleChoiceTest.getStartDate() < unixTimeNow) {
 //            LinkedHashMap<String, String> response = new LinkedHashMap<>();
 //            response.put(Constants.ERROR_CODE_KEY, ErrorMessage.MULTIPLE_CHOICE_TEST_UPDATE_STARTED_TEST.getErrorCode());
 //            response.put(Constants.MESSAGE_KEY, ErrorMessage.MULTIPLE_CHOICE_TEST_UPDATE_STARTED_TEST.getMessage());
@@ -267,15 +279,15 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
             modifyUpdateMultipleChoiceTest(multipleChoiceTest);
         }
         if (Objects.nonNull(dto.getStartDate()) && Objects.isNull(dto.getEndDate())) {
-            if (dto.getStartDate() < multipleChoiceTest.getEndDate()){
+            if (dto.getStartDate() < multipleChoiceTest.getEndDate()) {
                 multipleChoiceTest.setStartDate(dto.getStartDate());
                 modifyUpdateMultipleChoiceTest(multipleChoiceTest);
             } else {
-               throw new AppException(ErrorCode.MULTIPLE_CHOICE_TEST_DATE_INVALID_ERROR);
+                throw new AppException(ErrorCode.MULTIPLE_CHOICE_TEST_DATE_INVALID_ERROR);
             }
         }
         if (Objects.nonNull(dto.getEndDate()) && Objects.isNull(dto.getStartDate())) {
-            if (dto.getEndDate() > multipleChoiceTest.getStartDate()){
+            if (dto.getEndDate() > multipleChoiceTest.getStartDate()) {
                 multipleChoiceTest.setEndDate(dto.getEndDate());
                 modifyUpdateMultipleChoiceTest(multipleChoiceTest);
             } else {
@@ -290,25 +302,25 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
         }
         multipleChoiceTest = multipleChoiceTestRepository.save(multipleChoiceTest);
         MultipleChoiceTestResponse response = CustomBuilder.buildMultipleChoiceTestResponse(multipleChoiceTest);
-        Optional<Subject> subject=subjectRepository.findById(multipleChoiceTest.getSubject().getId());
-        Long subjectId=subject.get().getId();
-        String subjectName=subject.get().getSubjectName();
-        List<String> studentIds=subjectRepository.getAllUserIdOfSubjectBySubjectId(subjectId);
-        List<UserRequest> students=identityService.getAllUserByListId(studentIds);
-        List<String> listEmailStudent=students.stream().map(student->
+        Optional<Subject> subject = subjectRepository.findById(multipleChoiceTest.getSubject().getId());
+        Long subjectId = subject.get().getId();
+        String subjectName = subject.get().getSubjectName();
+        List<String> studentIds = subjectRepository.getAllUserIdOfSubjectBySubjectId(subjectId);
+        List<UserRequest> students = identityService.getAllUserByListId(studentIds);
+        List<String> listEmailStudent = students.stream().map(student ->
                 student.getEmailAddress()
         ).toList();
-        TestNotification testNotification=CustomBuilder.buildTestNotification(multipleChoiceTest,listEmailStudent,subjectId,subjectName);
+        TestNotification testNotification = CustomBuilder.buildTestNotification(multipleChoiceTest, listEmailStudent, subjectId, subjectName);
         Map<String, Object> params = new HashMap<>();
         params.put("testNotification", testNotification);
-        params.put("senderId",multipleChoiceTest.getCreatedBy());
+        params.put("senderId", multipleChoiceTest.getCreatedBy());
         params.put("listReceiverId", studentIds);
         NotificationEvent event = NotificationEvent.builder()
                 .channel("EMAIL")
                 .templateCode("EDIT_TEST")
                 .param(params)
                 .build();
-        kafkaTemplate.send("notification-delivery",event);
+        kafkaTemplate.send("notification-delivery", event);
 //        mailService.sendTestUpdatedNotificationEmail(multipleChoiceTest);
         return ApiResponse.builder().data(response).build();
     }
@@ -316,34 +328,34 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
     @Override
     public ApiResponse<?> deleteMultipleChoiceTest(Long testId) {
         Optional<MultipleChoiceTest> multipleChoiceTestOp = multipleChoiceTestRepository.findById(testId);
-        if(multipleChoiceTestOp.isEmpty()) {
-           throw new AppException(ErrorCode.MULTIPLE_CHOICE_NOT_FOUND_ERROR);
+        if (multipleChoiceTestOp.isEmpty()) {
+            throw new AppException(ErrorCode.MULTIPLE_CHOICE_NOT_FOUND_ERROR);
         }
         MultipleChoiceTest multipleChoiceTest = multipleChoiceTestOp.get();
         Long unixTimeNow = Timestamp.from(ZonedDateTime.now().toInstant()).getTime();
-        if(multipleChoiceTest.getStartDate() < unixTimeNow) {
+        if (multipleChoiceTest.getStartDate() < unixTimeNow) {
 
             throw new AppException(ErrorCode.MULTIPLE_CHOICE_TEST_DELETE_STARTED_TEST_ERROR);
         }
-        Optional<Subject> subject =subjectRepository.findById(multipleChoiceTest.getSubject().getId());
-        Long subjectId=subject.get().getId();
-        String subjectName=subject.get().getSubjectName();
-        List<String> studentIds=subjectRepository.getAllUserIdOfSubjectBySubjectId(subjectId);
-        List<UserRequest> students=identityService.getAllUserByListId(studentIds);
-        List<String> listEmailStudent=students.stream().map(student->
+        Optional<Subject> subject = subjectRepository.findById(multipleChoiceTest.getSubject().getId());
+        Long subjectId = subject.get().getId();
+        String subjectName = subject.get().getSubjectName();
+        List<String> studentIds = subjectRepository.getAllUserIdOfSubjectBySubjectId(subjectId);
+        List<UserRequest> students = identityService.getAllUserByListId(studentIds);
+        List<String> listEmailStudent = students.stream().map(student ->
                 student.getEmailAddress()
         ).toList();
-        TestNotification testNotification=CustomBuilder.buildTestNotification(multipleChoiceTest,listEmailStudent,subjectId,subjectName);
+        TestNotification testNotification = CustomBuilder.buildTestNotification(multipleChoiceTest, listEmailStudent, subjectId, subjectName);
         Map<String, Object> params = new HashMap<>();
         params.put("testNotification", testNotification);
-        params.put("senderId",multipleChoiceTest.getCreatedBy());
+        params.put("senderId", multipleChoiceTest.getCreatedBy());
         params.put("listReceiverId", studentIds);
         NotificationEvent event = NotificationEvent.builder()
                 .channel("EMAIL")
                 .templateCode("DELETE_TEST")
                 .param(params)
                 .build();
-        kafkaTemplate.send("notification-delivery",event);
+        kafkaTemplate.send("notification-delivery", event);
 //        mailService.sendTestDeletedNotificationEmail(multipleChoiceTest);
         multipleChoiceTestRepository.deleteById(testId);
         return ApiResponse.builder().build();
@@ -364,11 +376,11 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
         modifyUpdateMultipleChoiceTest(multipleChoiceTest);
         multipleChoiceTest = multipleChoiceTestRepository.save(multipleChoiceTest);
         List<QuestionResponse> questionsOfTheTest = new ArrayList<>();
-        if(Objects.nonNull(dto.getQuestionIds())) {
+        if (Objects.nonNull(dto.getQuestionIds())) {
             questionsOfTheTest =
-                    addQuestionsToTestByQuestionId(multipleChoiceTest.getId(),dto.getQuestionIds());
+                    addQuestionsToTestByQuestionId(multipleChoiceTest.getId(), dto.getQuestionIds());
         }
-        if(Objects.nonNull(dto.getRandomQuestions())) {
+        if (Objects.nonNull(dto.getRandomQuestions())) {
             questionsOfTheTest =
                     addRandomQuestionToTestByQuestionGroupId
                             (multipleChoiceTest.getId(), dto.getRandomQuestions());
@@ -381,24 +393,24 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
 //                .idOfTypeNotify(multipleChoiceTest.getId())
 //                .build();
 //        notificationClient.sendNotification(notificationRequest);
-        Long subjectId=dto.getSubjectId();
-        String subjectName=subject.getSubjectName();
-        List<String> studentIds=subjectRepository.getAllUserIdOfSubjectBySubjectId(subjectId);
-        List<UserRequest> students=identityService.getAllUserByListId(studentIds);
-        List<String> listEmailStudent=students.stream().map(student->
-             student.getEmailAddress()
+        Long subjectId = dto.getSubjectId();
+        String subjectName = subject.getSubjectName();
+        List<String> studentIds = subjectRepository.getAllUserIdOfSubjectBySubjectId(subjectId);
+        List<UserRequest> students = identityService.getAllUserByListId(studentIds);
+        List<String> listEmailStudent = students.stream().map(student ->
+                student.getEmailAddress()
         ).toList();
-        TestNotification testNotification=CustomBuilder.buildTestNotification(multipleChoiceTest,listEmailStudent,subjectId,subjectName);
+        TestNotification testNotification = CustomBuilder.buildTestNotification(multipleChoiceTest, listEmailStudent, subjectId, subjectName);
         Map<String, Object> params = new HashMap<>();
         params.put("testNotification", testNotification);
-        params.put("senderId",multipleChoiceTest.getCreatedBy());
+        params.put("senderId", multipleChoiceTest.getCreatedBy());
         params.put("listReceiverId", studentIds);
         NotificationEvent event = NotificationEvent.builder()
                 .channel("EMAIL")
                 .templateCode("CREATE_TEST")
                 .param(params)
                 .build();
-        kafkaTemplate.send("notification-delivery",event);
+        kafkaTemplate.send("notification-delivery", event);
 
 //        mailService.sendTestCreatedNotificationEmail(dto.getClassroomId(), multipleChoiceTest);
         return ApiResponse.builder().data(response).build();
@@ -410,10 +422,10 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
         MultipleChoiceTest multipleChoiceTest = testOp.get();
         List<Question> questions = new ArrayList<>();
         List<QuestionResponse> questionResponses = new ArrayList<>();
-        randomQuestions.forEach(value->{
+        randomQuestions.forEach(value -> {
             List<Question> questionsTemp = questionService.
-                        getRandomQuestionsByQuestionGroup
-                                (value.getQuestionGroupId(), value.getNumberOfQuestion());
+                    getRandomQuestionsByQuestionGroup
+                            (value.getQuestionGroupId(), value.getNumberOfQuestion());
             questions.addAll(questionsTemp);
         });
         questions.forEach(question -> {
@@ -424,7 +436,7 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
             UserRequest userProfile = identityService.getCurrentUser();
             testQuestion.setCreatedBy(userProfile.getLoginName());
             testQuestionRepository.save(testQuestion);
-            questionResponses.add(CustomBuilder.buildQuestionResponse(question,answerRepository.findListAnswerByIdQuestion(question.getId())));
+            questionResponses.add(CustomBuilder.buildQuestionResponse(question, answerRepository.findListAnswerByIdQuestion(question.getId())));
         });
         return new ArrayList<>();
     }
@@ -447,7 +459,7 @@ public class MultipleChoiceTestServiceImpl implements MultipleChoiceTestService 
             UserRequest userProfile = identityService.getCurrentUser();
             testQuestion.setCreatedBy(userProfile.getLoginName());
             testQuestions.add(testQuestion);
-            questionResponses.add(CustomBuilder.buildQuestionResponse(question,answerRepository.findListAnswerByIdQuestion(question.getId())));
+            questionResponses.add(CustomBuilder.buildQuestionResponse(question, answerRepository.findListAnswerByIdQuestion(question.getId())));
         });
         // Only save when finding all the questions by list questionId
         testQuestionRepository.saveAll(testQuestions);

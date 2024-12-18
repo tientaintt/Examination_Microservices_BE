@@ -12,6 +12,7 @@ import com.spring.boot.exam_service.entity.*;
 import com.spring.boot.exam_service.exception.AppException;
 import com.spring.boot.exam_service.exception.ErrorCode;
 import com.spring.boot.exam_service.repository.*;
+import com.spring.boot.exam_service.repository.httpclient.FileClient;
 import com.spring.boot.exam_service.service.IdentityService;
 import com.spring.boot.exam_service.service.QuestionGroupService;
 import com.spring.boot.exam_service.utils.CustomBuilder;
@@ -45,10 +46,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -65,6 +63,7 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
     private final AnswerRepository answerRepository;
     private final QuestionTypeRepository questionTypeRepository;
     private final AnswerQuestionRepository answerQuestionRepository;
+    private final FileClient fileClient;
 
     @Override
     public ApiResponse<?> createQuestionGroup(CreateQuestionGroupDTO dto) {
@@ -172,7 +171,7 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
     public ApiResponse<?> importQuestionsIntoQuestionGroup(MultipartFile file, long questionGroupId) {
         try {
             Optional<QuestionGroup> questionGroupOp = questionGroupRepository.findById(questionGroupId);
-            if(questionGroupOp.isEmpty()) {
+            if (questionGroupOp.isEmpty()) {
                 throw new AppException(ErrorCode.QUESTION_GROUP_NOT_FOUND_ERROR);
             }
             List<Question> questions = this.readQuestionsFromExcel(file.getInputStream(), questionGroupId);
@@ -204,9 +203,9 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
                     if (questionType1.isPresent()) {
                         Optional<QuestionGroup> questionGroup = questionGroupRepository.findById(questionGroupId);
                         if (questionGroup.isPresent()) {
-                            if(questionText.isEmpty()||questionText.isBlank()){
+                            if (questionText.isEmpty() || questionText.isBlank()) {
                                 throw new AppException(ErrorCode.QUESTION_CONTENT_NOT_FOUND_ERROR);
-                            }else {
+                            } else {
                                 Question question = Question.builder()
                                         .questionType(questionType1.get())
                                         .content(questionText)
@@ -221,8 +220,8 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
                                 List<String> listCorrectAnswer = Arrays.stream(correctAnswer.split("\\|"))
                                         .map(String::trim)
                                         .collect(Collectors.toList());
-                                log.info("Correct {}",correctAnswer);
-                                log.info("Answer {}",answers);
+                                log.info("Correct {}", correctAnswer);
+                                log.info("Answer {}", answers);
 
                                 if (listAnswerContent.isEmpty()) {
                                     throw new AppException(ErrorCode.NO_ANSWER_FOUND);
@@ -232,18 +231,18 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
                                 }
                                 AtomicBoolean isCheckCorrect = new AtomicBoolean(false);
                                 listAnswerContent.forEach(answerContent -> {
-                                            if (answerContent.isBlank()) {
-                                                throw new AppException(ErrorCode.NO_CORRECT_ANSWER_FOUND);
-                                            }
+                                    if (answerContent.isBlank()) {
+                                        throw new AppException(ErrorCode.NO_CORRECT_ANSWER_FOUND);
+                                    }
                                     boolean isCorrect = listCorrectAnswer.contains(answerContent);
-                                            if(isCorrect){
-                                                isCheckCorrect.set(true);
-                                            }
-                                        });
-                                if(isCheckCorrect.get()){
+                                    if (isCorrect) {
+                                        isCheckCorrect.set(true);
+                                    }
+                                });
+                                if (isCheckCorrect.get()) {
                                     Question finalQuestion = questionRepository.save(question);
                                     listAnswerContent.forEach(answerContent -> {
-                                        if(answerContent.isBlank()){
+                                        if (answerContent.isBlank()) {
                                             throw new AppException(ErrorCode.NO_CORRECT_ANSWER_FOUND);
                                         }
                                         Optional<Answer> answerOptional = answerRepository.findByAnswer(answerContent);
@@ -260,7 +259,7 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
                                         }
 
                                         boolean isCorrect = listCorrectAnswer.contains(answerContent);
-                                        log.info("Is correct {}",String.valueOf(isCorrect));
+                                        log.info("Is correct {}", String.valueOf(isCorrect));
 
                                         answerQuestionRepository.save(
                                                 AnswerQuestion.builder()
@@ -314,7 +313,10 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
 
         List<QuestionResponse> response = questions.stream().map(question -> {
             log.info("questionId +{}", question.getId().toString());
-            return CustomBuilder.buildQuestionResponse(question, answerRepository.findListAnswerByIdQuestion(question.getId()));
+            String imageUrl = fileClient.getFileRelationshipsByParentIds(Collections.singletonList(question.getQuestionId())).getData().stream().findFirst().map(fileRelationship -> fileRelationship.getPath_file()).orElse(null);
+            QuestionResponse questionResponse = CustomBuilder.buildQuestionResponse(question, answerRepository.findListAnswerByIdQuestion(question.getId()));
+            questionResponse.setImageUrl(imageUrl);
+            return questionResponse;
         }).toList();
         log.info("Get questions of question group: end, isActiveQuestion: " + true);
         return response;
@@ -336,7 +338,7 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
                 headerRow.createCell(1).setCellValue("Question type");
                 headerRow.createCell(2).setCellValue("Answer");
                 headerRow.createCell(3).setCellValue("Correct answer");
-
+                headerRow.createCell(4).setCellValue("Question image url");
                 int i = 0;
                 for (QuestionResponse question : questionList) {
                     log.info(question.getId().toString());
@@ -361,6 +363,9 @@ public class QuestionGroupServiceImpl implements QuestionGroupService {
                     }
                     row.createCell(2).setCellValue(allAnswers.toString());
                     row.createCell(3).setCellValue(dapAnDung.toString());
+                    if(question.getImageUrl() != null) {
+                        row.createCell(4).setCellValue(question.getImageUrl());
+                    }
                     i++;
                 }
                 for (int j = 0; j < 4; j++) {  // Điều chỉnh cho 4 cột

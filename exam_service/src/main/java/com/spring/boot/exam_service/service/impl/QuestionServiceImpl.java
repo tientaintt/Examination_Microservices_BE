@@ -11,9 +11,11 @@ import com.spring.boot.exam_service.entity.*;
 import com.spring.boot.exam_service.exception.AppException;
 import com.spring.boot.exam_service.exception.ErrorCode;
 import com.spring.boot.exam_service.repository.*;
+import com.spring.boot.exam_service.repository.httpclient.FileClient;
 import com.spring.boot.exam_service.service.IdentityService;
 import com.spring.boot.exam_service.service.QuestionService;
 import com.spring.boot.exam_service.utils.CustomBuilder;
+import com.spring.boot.exam_service.utils.EnumParentFileType;
 import com.spring.boot.exam_service.utils.PageUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,12 +23,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -40,6 +40,7 @@ public class QuestionServiceImpl implements QuestionService {
     private final QuestionTypeRepository questionTypeRepository;
     private final AnswerRepository answerRepository;
     private final AnswerQuestionRepository answerQuestionRepository;
+    private final FileClient fileClient;
 
     @Override
     public List<Question> getRandomQuestionsByQuestionGroup(Long questionGroupId, Long numberOfQuestion) {
@@ -114,6 +115,68 @@ public class QuestionServiceImpl implements QuestionService {
         return ApiResponse.builder()
                 .data(response)
                 .build();
+    }
+
+    @Override
+    public ApiResponse<?> createQuestionV2(MultipartFile file, CreateQuestionDTO dto) {
+        log.info("Create question: start");
+        Optional<QuestionGroup> questionGroupOp =
+                questionGroupRepository.findByIdAndStatus(dto.getQuestionGroupId(), true);
+        log.info("Question group found: " + questionGroupOp.isPresent());
+        QuestionType questionType = questionTypeRepository.findByTypeQuestion(dto.getQuestionType()).orElseThrow(
+                () -> new AppException(ErrorCode.QUESTION_TYPE_NOT_FOUND_ERROR)
+        );
+        Question question = Question.builder()
+                .content(dto.getContent().trim())
+                .questionType(questionType)
+                .questionGroup(questionGroupOp.get())
+                .build();
+        modifyUpdateQuestion(question);
+        question = questionRepository.save(question);
+        Question finalQuestion = question;
+        List<AnswerResponse> answerList = new ArrayList<>();
+        dto.getAnswers().stream().forEach((answer -> {
+            Optional<Answer> answer1 = answerRepository.findByAnswer(answer.getAnswerContent());
+            if (answer1.isEmpty()) {
+                Answer save = answerRepository.save(Answer.builder()
+                        .answer(answer.getAnswerContent())
+                        .build());
+
+                AnswerQuestion answerQuestion = answerQuestionRepository.save(
+                        AnswerQuestion.builder()
+                                .answer(save)
+                                .question(finalQuestion)
+                                .isCorrect(answer.getIsCorrect())
+                                .build());
+                answerList.add(AnswerResponse.builder()
+                        .idAnswerQuestion(answerQuestion.getId())
+                        .answerContent(save.getAnswer())
+                        .isCorrect(answerQuestion.getIsCorrect())
+                        .build());
+
+            } else {
+                AnswerQuestion answerQuestion = answerQuestionRepository.save(AnswerQuestion.builder()
+                        .answer(answer1.get())
+                        .question(finalQuestion)
+                        .isCorrect(answer.getIsCorrect())
+                        .build());
+                answerList.add(AnswerResponse.builder()
+                        .idAnswerQuestion(answerQuestion.getId())
+                        .answerContent(answer.getAnswerContent())
+                        .isCorrect(answer.getIsCorrect())
+                        .build());
+
+            }
+
+        }));
+        String imageUrl=fileClient.saveFile(file,finalQuestion.getQuestionId(), EnumParentFileType.QUESTION_IMAGE.name()).getData().getPath_file();
+        QuestionResponse response = CustomBuilder.buildQuestionResponse(question, answerList);
+        response.setImageUrl(imageUrl);
+        log.info("Create question: end");
+        return ApiResponse.builder()
+                .data(response)
+                .build();
+
     }
 
     @Override
@@ -274,7 +337,10 @@ public class QuestionServiceImpl implements QuestionService {
         if(question.isEmpty()) {
             throw new AppException(ErrorCode.QUESTION_NOT_FOUND_ERROR);
         }
+        String imageUrl=fileClient.getFileRelationshipsByParentIds(Collections.singletonList(question.get().getQuestionId())).getData().stream().findFirst().map(fileRelationship -> fileRelationship.getPath_file()).orElse(null);
         QuestionResponse response= CustomBuilder.buildQuestionResponse(question.get(), answerRepository.findListAnswerByIdQuestion(question.get().getId()));
+        response.setImageUrl(imageUrl);
+
         return ApiResponse.builder()
                 .data(response)
                 .build();

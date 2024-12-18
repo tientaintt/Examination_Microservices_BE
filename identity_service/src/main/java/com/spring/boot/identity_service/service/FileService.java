@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spring.boot.identity_service.dto.request.FileRequest;
+import com.spring.boot.identity_service.dto.request.FileUploadRequest;
 import com.spring.boot.identity_service.dto.response.UserResponse;
 import com.spring.boot.identity_service.repository.httpclient.FileClient;
 import com.spring.boot.identity_service.util.JsonParserUtils;
@@ -39,7 +40,7 @@ public class FileService {
         log.info("File type: " + file.getContentType());
         log.info(parentId);
         log.info(parentType);
-log.info(fileClient.saveFile(file,parentId,parentType).getData().toString());
+
         ObjectMapper objectMapper = new ObjectMapper();
         FileRequest fileRequest = new FileRequest();
 
@@ -68,9 +69,14 @@ log.info(fileClient.saveFile(file,parentId,parentType).getData().toString());
         return fileRequest;
     }
 
-
+    public List<FileRequest> saveFiles(FileUploadRequest fileUploadRequest) {
+        log.info("Saving files {}",fileUploadRequest.getFiles().stream().findFirst().get().getParentId());
+        return fileClient.saveFiles(fileUploadRequest).getData();
+    }
+    public List<FileRequest> getFilesByParentIds(List<String> parentIds) {
+        return fileClient.getFileRelationshipsByParentIds(parentIds).getData();
+    }
     public ResponseEntity<Resource> exportStudentsVerified(List<UserResponse> dataExport, String typeExport) {
-
         return fileClient.exportStudentsVerified(dataExport,typeExport);
     }
 }

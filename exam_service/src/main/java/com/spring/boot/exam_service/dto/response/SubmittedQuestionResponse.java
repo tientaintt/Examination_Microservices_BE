@@ -14,7 +14,7 @@ public class SubmittedQuestionResponse {
     private Long questionId;
     private String questionType;
     private String content;
-
+    private String imageUrl;
     private List<AnswerResponse> answers;
     private String correctAnswer;
     private String submittedAnswer;

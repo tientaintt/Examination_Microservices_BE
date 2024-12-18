@@ -153,6 +153,7 @@ public class UserServiceImpl implements UserService {
                         tokenDetails.getAccessToken(),
                         refreshToken.getRefreshToken(),
                         tokenDetails.getRoles(),
+                        null,
                         tokenDetails.getExpiryTime()))
                 .build()
                 ;
@@ -366,7 +367,7 @@ public class UserServiceImpl implements UserService {
         AuthenticationResponse tokenDetails = authenticationService.authenticate(
                 new AuthenticationRequest(userProfile.getUsername(), changePassword.getNewPassword())
         );
-
+        String imageUrl=fileService.getFilesByParentIds(Collections.singletonList(userProfile.getId().toString())).stream().findFirst().get().getPath_file().toString();
         return APIResponse.<JwtResponse>builder().data(new JwtResponse(
                         userProfile.getId(),
                         tokenDetails.getDisplayName(),
@@ -376,6 +377,7 @@ public class UserServiceImpl implements UserService {
                         tokenDetails.getAccessToken(),
                         refreshToken.getRefreshToken(),
                         tokenDetails.getRoles(),
+                        imageUrl,
                         tokenDetails.getExpiryTime()))
                 .build()
                 ;
@@ -412,7 +414,10 @@ public class UserServiceImpl implements UserService {
             addStudent(userProfile);
 //            mailService.sendVerificationEmail(userProfile.getLoginName());
         }
-        return APIResponse.builder().data(userMapper.toUserResponse(userProfile)).build();
+        String imageUrl=fileService.getFilesByParentIds(Collections.singletonList(userProfile.getId().toString())).stream().findFirst().get().getPath_file().toString();
+        UserResponse response=userMapper.toUserResponse(userProfile);
+        response.setImageUrl(imageUrl);
+        return APIResponse.builder().data(response).build();
     }
 
     @Override
@@ -479,7 +484,17 @@ public class UserServiceImpl implements UserService {
     @Override
     public APIResponse<?> updateImage(MultipartFile file) {
         User user = webUtils.getCurrentLogedInUser();
-        FileRequest fileRequest = fileService.saveFile(file, user.getId(), EnumParentFileType.USER_AVATAR.name());
+//        FileUploadRequest fileUploadRequest=FileUploadRequest.builder()
+//                .files(Collections.singletonList(FileUploadRequest.FileUploadRequestDto.builder()
+//                        .file(file)
+//                        .parentId(user.getId())
+//                        .parentType(EnumParentFileType.USER_AVATAR.name())
+//                        .build()))
+//                .build();
+//
+//        log.info(file.toString());
+//        Optional<FileRequest> fileRequest = fileService.saveFiles(fileUploadRequest).stream().findFirst();
+        FileRequest fileRequest=fileService.saveFile(file, user.getId(), EnumParentFileType.USER_AVATAR.name());
         return APIResponse.builder()
                 .data(UserResponse.builder()
                         .imageUrl(fileRequest.getPath_file())

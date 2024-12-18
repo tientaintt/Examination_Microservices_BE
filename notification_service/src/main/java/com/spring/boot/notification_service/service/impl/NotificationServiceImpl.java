@@ -89,7 +89,7 @@ public class NotificationServiceImpl implements NotificationService {
                 "/topic/notifications/" +request.getReceiverId(),
                 notification
         );
-        log.info("Saved Notification: {}", notification1);
+        log.info("Saved notification: {}", notification1);
         return NotificationResponse.builder()
                 .id(notification1.getId())
                 .message(notification1.getMessage())

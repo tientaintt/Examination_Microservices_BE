@@ -2,7 +2,8 @@ package com.spring.boot.exam_service.utils;
 
 public enum EnumParentFileType {
     COURSE_VIDEO,
-    CATEGORY_IMAGE,
+    QUESTION_IMAGE,
+    QUESTION_AUDIO,
     USER_AVATAR,
 
 }

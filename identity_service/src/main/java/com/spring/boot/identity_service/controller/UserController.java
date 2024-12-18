@@ -16,6 +16,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -76,8 +77,9 @@ public class UserController {
     public APIResponse<?> updateUserprofile(@Valid @RequestBody UpdateUserRequest DTO){
         return userService.updateUserProfile(DTO);
     }
+    @PreAuthorize("hasAnyRole('TEACHER','ADMIN','STUDENT')")
     @PutMapping(value = "/user/update/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public APIResponse<?> updateUserProfileImage(@RequestPart MultipartFile file){
+    public APIResponse<?> updateUserProfileImage(@RequestPart("file") MultipartFile file){
         return  userService.updateImage(file);
     }
 //    UserService userService;

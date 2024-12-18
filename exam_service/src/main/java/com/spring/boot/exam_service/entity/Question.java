@@ -19,12 +19,18 @@ public class Question extends AbstractAuditingEntity {
     private static final String ID = "id";
     private static final String CONTENT = "content";
 
-    private static final String CORRECT_ANSWER = "correct_answer";
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = ID, nullable = false)
     private Long id;
+
+    @Column(name = "question_id", nullable = true, unique = true)
+    private String questionId;
+
+    @PostPersist
+    public void generateQuestionId() {
+        this.questionId = "question_" + this.id;
+    }
 
     @Column(name = CONTENT)
     private String content;

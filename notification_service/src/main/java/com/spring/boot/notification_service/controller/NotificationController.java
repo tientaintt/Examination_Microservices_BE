@@ -36,15 +36,17 @@ public class NotificationController {
      NotificationService notificationService;
      @PostMapping("read/{notification_id}")
      @PreAuthorize("hasAnyRole('TEACHER', 'STUDENT')")
-     public APIResponse<?> readNotification(@PathVariable("notification_id") String notificationId){
+     public APIResponse<?> readNotification(@PathVariable("notification_id") String notificationId) {
          return notificationService.readNotification(notificationId);
      }
+
      @GetMapping(value = "/my")
      public APIResponse<?> getAllMyNotifications(
                                                  @RequestParam(defaultValue = DEFAULT_PAGE) int page,
                                                  @RequestParam(defaultValue = DEFAULT_COLUMN) String column,
                                                  @RequestParam(defaultValue = DEFAULT_SIZE) int size,
-                                                 @RequestParam(defaultValue = DEFAULT_SORT_INCREASE) String sortType) {
+                                                 @RequestParam(defaultValue = DEFAULT_SORT_INCREASE) String sortType)
+     {
          return notificationService.getAllMyNotifications(page,column,size,sortType);
      }
 

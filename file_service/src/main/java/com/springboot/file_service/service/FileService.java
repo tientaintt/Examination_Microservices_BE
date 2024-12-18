@@ -5,10 +5,7 @@ import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.Permission;
 
-import com.springboot.file_service.dto.request.ExportStudentOfClassRequest;
-import com.springboot.file_service.dto.request.FileRelationshipDTO;
-import com.springboot.file_service.dto.request.TrackEventRequest;
-import com.springboot.file_service.dto.request.UserRequest;
+import com.springboot.file_service.dto.request.*;
 import com.springboot.file_service.dto.response.ApiResponse;
 import com.springboot.file_service.entity.FileRelationship;
 import com.springboot.file_service.exception.AppException;
@@ -58,6 +55,7 @@ public class FileService {
 
         return examClient.importQuestionsIntoQuestionGroup(file, questionGrId);
     }
+
     public ApiResponse<?> importStudentsIntoSubject(MultipartFile file, Long questionId) {
 
         return examClient.importStudentsIntoSubject(file, questionId);
@@ -136,13 +134,9 @@ public class FileService {
                 // Case 1 - Video
                 case COURSE_VIDEO:
                     return Constants.BASE_VIDEO_URL + fileId + "/preview";
-
                 // Case 2 - Image
-                case COURSE_IMAGE:
-                case CATEGORY_IMAGE:
+                case QUESTION_IMAGE:
                 case USER_AVATAR:
-                case USER_PROFILE_DESCRIPTION:
-                case COURSE_DESCRIPTION:
                     return Constants.BASE_IMAGE_URL + fileId;
 
                 default:
@@ -152,8 +146,13 @@ public class FileService {
         return null;
     }
 
-    public List<FileRelationshipDTO> getFileRelationships(List<String> parentIds, String type) {
+    public List<FileRelationshipDTO> getFileRelationshipsByParentIdsAndType(List<String> parentIds, String type) {
         List<FileRelationship> fileRelationships = fileRelationshipRepository.findAllByParentIdInAndParentType(parentIds, type);
+        return toDTOS(fileRelationships);
+    }
+
+    public List<FileRelationshipDTO> getFileRelationshipsByParentIds(List<String> parentIds) {
+        List<FileRelationship> fileRelationships = fileRelationshipRepository.findAllByParentIdIn(parentIds);
         return toDTOS(fileRelationships);
     }
 
@@ -194,6 +193,15 @@ public class FileService {
             throw new AppException(ErrorCode.FILE_NOT_FOUND);
         }
         fileRelationshipRepository.deleteByPathFile(pathFile);
+    }
+
+    public List<FileRelationshipDTO> saveFiles(FileUploadRequest fileUploadRequest) {
+
+        List<FileRelationshipDTO> results = new ArrayList<>();
+        for (FileUploadRequest.FileUploadRequestDto dto : fileUploadRequest.getFiles()) {
+            results.add(saveFile(dto.getFile(), dto.getParentId(), dto.getParentType()));
+        }
+        return results;
     }
 
     public FileRelationshipDTO saveFile(MultipartFile multipartFile, String parentId, String parentType) {
@@ -332,7 +340,7 @@ public class FileService {
 
                 int dataRowIndex = 1;
 
-                for (TrackEventRequest eventRequest  : dataExport) {
+                for (TrackEventRequest eventRequest : dataExport) {
 
                     Row dataRow = sheet.createRow(dataRowIndex);
                     dataRow.createCell(0).setCellValue(eventRequest.toString());

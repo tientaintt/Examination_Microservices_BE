@@ -27,7 +27,7 @@ public class JwtResponse {
     private String refreshToken;
 
     private List<String> roles;
-
+    private String imageUrl;
     private Date expired_in;
 
 }
